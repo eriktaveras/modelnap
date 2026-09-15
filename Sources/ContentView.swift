@@ -52,9 +52,16 @@ struct ContentView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 9) {
-            Image(systemName: showingSettings ? "gearshape.fill" : "brain.fill")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(ollama.power == .on || showingSettings ? t.accent : t.muted)
+            Group {
+                if showingSettings {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(t.accent)
+                } else {
+                    Image(nsImage: Mark.logoImage(points: 22, color: NSColor(ollama.power == .on ? t.accent : t.muted)))
+                }
+            }
+            .frame(width: 22, height: 22)
             VStack(alignment: .leading, spacing: 0) {
                 Text(showingSettings ? tr("Ajustes") : "ModelNap")
                     .font(Brand.sans(14, .semibold))

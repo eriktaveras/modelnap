@@ -195,7 +195,15 @@ save(canvas(128, 128) { ctx in
     Mark.drawAppIcon(in: ctx, px: 128)
 }, "icon.png")
 
-// 5. Panel en inglés, para la sección de idiomas.
-save(canvas(360, 360 * image("panel-en-light.png").size.height / image("panel-en-light.png").size.width + 20) { ctx in
-    drawPanel(image("panel-en-light.png"), at: CGPoint(x: 10, y: 6), width: 340, dark: false, in: ctx)
-}, "panel-en.png")
+// 5. Capturas en inglés: panel claro y oscuro, y ajustes.
+func single(_ shot: String, dark: Bool, _ name: String) {
+    let img = image(shot)
+    let w: CGFloat = 340
+    let h = w * img.size.height / img.size.width
+    save(canvas(w + 40, h + 60, dark: dark) { ctx in
+        drawPanel(img, at: CGPoint(x: 20, y: 16), width: w, dark: dark, in: ctx)
+    }, name)
+}
+single("panel-en-light.png", dark: false, "panel-en.png")
+single("panel-en-dark.png", dark: true, "panel-en-dark.png")
+single("settings-en-light.png", dark: false, "settings-en.png")

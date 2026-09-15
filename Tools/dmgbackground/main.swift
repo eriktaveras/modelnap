@@ -1,6 +1,6 @@
 import AppKit
 
-// Fondo de la ventana del .dmg (660x440 pt, @1x y @2x), con la identidad verde
+// Fondo de la ventana del .dmg (compilar junto a Sources/Logo.swift) (660x440 pt, @1x y @2x), con la identidad verde
 // de la app. Los íconos los coloca Finder encima: app en (170, 200)
 // y Aplicaciones en (490, 200), coordenadas desde arriba a la izquierda.
 //   dmgbackground <salida-sin-extension> <version>
@@ -51,13 +51,14 @@ func render(scale: CGFloat) -> Data {
     paper.setFill()
     CGRect(x: 0, y: 0, width: W, height: H).fill()
 
-    // Cabecera: cerebro verde, nombre y versión.
-    let symbolConfig = NSImage.SymbolConfiguration(pointSize: 20, weight: .medium)
-        .applying(NSImage.SymbolConfiguration(paletteColors: [green]))
-    if let brain = NSImage(systemSymbolName: "brain.fill", accessibilityDescription: nil)?
-        .withSymbolConfiguration(symbolConfig) {
-        brain.draw(in: CGRect(x: 32, y: 34, width: brain.size.width, height: brain.size.height),
-                   from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+    // Cabecera: logo, nombre y versión.
+    if let cg = NSGraphicsContext.current?.cgContext {
+        // El contexto está volteado (y hacia abajo); Logo dibuja con y hacia arriba.
+        cg.saveGState()
+        cg.translateBy(x: 0, y: 66)
+        cg.scaleBy(x: 1, y: -1)
+        Logo.draw(in: cg, rect: CGRect(x: 24, y: 0, width: 42, height: 42), color: green.cgColor, weight: 1.1)
+        cg.restoreGState()
     }
     text("ModelNap", font(24, weight: .bold), ink, at: CGPoint(x: 66, y: 30))
     text(tr("Deja dormir a tus modelos locales y recupera la memoria del Mac."), font(13), secondary, at: CGPoint(x: 67, y: 62))
@@ -116,7 +117,7 @@ func render(scale: CGFloat) -> Data {
                                    attributes: [.font: sans, .foregroundColor: secondary]))
     body.append(NSAttributedString(string: tr("barra de menús, arriba a la derecha"),
                                    attributes: [.font: bold, .foregroundColor: ink]))
-    body.append(NSAttributedString(string: tr(": un cerebro con un punto verde. Clic para abrir el panel."),
+    body.append(NSAttributedString(string: tr(": el logo de ModelNap con un punto verde. Clic para abrir el panel."),
                                    attributes: [.font: sans, .foregroundColor: secondary]))
     body.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: body.length))
     paragraph(body, in: CGRect(x: box.minX + 34, y: box.minY + 34, width: box.width - 52, height: 44))

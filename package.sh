@@ -28,7 +28,7 @@ if [[ -n "${DEVELOPER_ID:-}" && -n "${NOTARY_PROFILE:-}" ]]; then
 fi
 
 echo "==> fondo del instalador"
-swiftc -O -swift-version 5 -framework AppKit Tools/dmgbackground.swift -o "$BUILD/dmgbackground"
+swiftc -O -swift-version 5 -framework AppKit Sources/Logo.swift Tools/dmgbackground/main.swift -o "$BUILD/dmgbackground"
 "$BUILD/dmgbackground" "$BUILD/dmg-fondo" "$VERSION"
 # TIFF con las dos resoluciones: Finder elige la @2x en pantallas Retina.
 tiffutil -cathidpicheck "$BUILD/dmg-fondo.png" "$BUILD/dmg-fondo@2x.png" -out "$BUILD/dmg-fondo.tiff" >/dev/null

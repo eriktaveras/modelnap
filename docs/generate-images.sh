@@ -16,11 +16,17 @@ for mode in light dark; do
   "$BIN" --snapshot "$SHOTS/settings-$mode.png" "$mode" settings demo -AppleLanguages "(es)" >/dev/null
 done
 "$BIN" --snapshot "$SHOTS/panel-en-light.png" light demo -AppleLanguages "(en)" >/dev/null
+"$BIN" --snapshot "$SHOTS/panel-en-dark.png" dark demo -AppleLanguages "(en)" >/dev/null
+"$BIN" --snapshot "$SHOTS/settings-en-light.png" light settings demo -AppleLanguages "(en)" >/dev/null
 
 echo "==> fondo del instalador"
-swiftc -O -swift-version 5 -framework AppKit Tools/dmgbackground.swift -o build/dmgbackground
+swiftc -O -swift-version 5 -framework AppKit Sources/Logo.swift Tools/dmgbackground/main.swift -o build/dmgbackground
 build/dmgbackground build/dmg-fondo "$(cat VERSION)" >/dev/null
 
 echo "==> composición"
-swiftc -O -swift-version 5 -framework AppKit Sources/Mark.swift Tools/readme-images/main.swift -o build/readme-images
+swiftc -O -swift-version 5 -framework AppKit Sources/Logo.swift Sources/Mark.swift Tools/readme-images/main.swift -o build/readme-images
 build/readme-images "$SHOTS" docs/images build/dmg-fondo@2x.png "$APP"
+
+echo "==> logo"
+swiftc -O -swift-version 5 -framework AppKit Sources/Logo.swift Tools/logo/main.swift -o build/logo
+build/logo docs/logo

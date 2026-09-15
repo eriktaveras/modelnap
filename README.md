@@ -47,7 +47,7 @@ depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vu
 | 🧹 | **Libera la memoria sin uso** | Tras 5, 15, 30 o 60 minutos sin generar, descarga el modelo. Ollama sigue encendido y lo recarga con el siguiente mensaje. |
 | 📊 | **Memoria del Mac** | RAM usada (mismo cálculo que el Monitor de Actividad), qué parte ocupa el modelo y la presión de memoria del sistema. |
 | 🗂️ | **Modelos instalados** | Tamaño, cuantización y etiquetas de *visión* y *herramientas*. Carga o libera cualquiera con un clic. |
-| 🟢 | **Estado de un vistazo** | Un cerebro en la barra de menús con un punto verde, ámbar o apagado. |
+| 🟢 | **Estado de un vistazo** | El logo en la barra de menús, con un punto verde, ámbar o sin punto. |
 | 🌍 | **Español e inglés** | Sigue el idioma del sistema o elígelo en Ajustes. |
 | 🌗 | **Claro y oscuro** | Se adapta a la apariencia de macOS. |
 | 🔒 | **Privada** | Solo habla con Ollama en tu Mac. Sin cuentas, sin telemetría, sin analítica. |
@@ -79,7 +79,7 @@ depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vu
 
 | Acción | Resultado |
 |---|---|
-| **Clic** en el cerebro | Abre el panel |
+| **Clic** en el ícono | Abre el panel |
 | **Clic derecho** | Encender/apagar, ver el log de Ollama, abrir al iniciar sesión, *Acerca de*, salir |
 | **⌥⌘O** | Enciende o apaga Ollama desde cualquier app |
 
@@ -130,16 +130,36 @@ funciona, pero apagar Ollama no. Por eso se distribuye firmada y notarizada fuer
 
 ## 🌍 Idiomas
 
-<img align="right" src="docs/images/panel-en.png" width="300" alt="Panel en inglés">
-
 La interfaz está en **español** (idioma base) e **inglés**. Por defecto sigue el idioma de macOS; se puede
 fijar en **Ajustes › Idioma**.
+
+<p align="center">
+  <img src="docs/images/panel-en.png" width="270" alt="Panel en inglés, modo claro">
+  <img src="docs/images/panel-en-dark.png" width="270" alt="Panel en inglés, modo oscuro">
+  <img src="docs/images/settings-en.png" width="270" alt="Ajustes en inglés">
+</p>
 
 Las traducciones viven en `Resources/<idioma>.lproj/Localizable.strings`. La clave de cada frase es el propio
 texto en español, así el código se lee igual que la interfaz. Para añadir un idioma basta con crear otra
 carpeta `.lproj` con las mismas claves.
 
-<br clear="right">
+## 🎨 Marca
+
+<img align="left" src="docs/logo/modelnap-mark-forest-512.png" width="84" alt="Logo de ModelNap">
+
+El logo es un **modelo echando la siesta**: un marco redondeado con el ojo cerrado y una «z» que se escapa por
+la esquina. Es un dibujo propio definido en [`Sources/Logo.swift`](Sources/Logo.swift), y de ahí salen el
+ícono de la app, el de la barra de menús, el instalador y los archivos para la web en
+[`docs/logo`](docs/logo): SVG en cuatro colores, PNG, `favicon.ico`, `favicon.svg` y `apple-touch-icon.png`.
+
+<br clear="left">
+
+| Uso | Color |
+|---|---|
+| Verde principal (fondos oscuros) | `#34D399` |
+| Verde bosque (fondos claros) | `#047857` |
+| «z» sobre el ícono | `#A7F3D0` |
+| Fondo del ícono | `#101318` |
 
 ## 🔒 Privacidad
 
@@ -157,7 +177,7 @@ App nativa (AppKit + SwiftUI) **sin proyecto de Xcode**: se compila con `swiftc`
 ./build.sh              # app en ./build (binario universal, firma ad-hoc)
 ./build.sh --install    # además la copia a ~/Applications y la relanza
 ./build.sh --test       # pruebas de IdleTracker
-./docs/generate-images.sh   # regenera las imágenes de este README
+./docs/generate-images.sh   # regenera las imágenes de este README y el logo
 ```
 
 ### Publicar una versión
@@ -194,11 +214,13 @@ Sources/
 ├── HotKey.swift          Atajo global ⌥⌘O (Carbon, sin permiso de Accesibilidad)
 ├── ContentView.swift     Panel, memoria, modelos y ajustes
 ├── Theme.swift           Colores y tipografía
-├── Mark.swift            Ícono de la barra y de la app
+├── Logo.swift            Geometría del logo (ícono, barra de menús, dmg y web)
+├── Mark.swift            Ícono de la barra, cabecera e ícono de la app
 └── L10n.swift            Traducciones y selector de idioma
 Resources/                es.lproj y en.lproj
 Tests/                    Pruebas de IdleTracker
-Tools/                    Ícono, fondo del dmg e imágenes del README
+Tools/                    Ícono, logo, fondo del dmg e imágenes del README
+docs/logo/                Logo para la web (SVG, PNG, favicon)
 packaging/                Ajustes de dmgbuild
 ```
 

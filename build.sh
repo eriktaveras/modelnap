@@ -40,7 +40,7 @@ cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 echo "==> icono"
 swiftc -O -swift-version 5 -framework AppKit \
-  Sources/Mark.swift Tools/main.swift \
+  Sources/Logo.swift Sources/Mark.swift Tools/main.swift \
   -o "$BUILD/makeicon"
 "$BUILD/makeicon" "$BUILD/AppIcon.iconset"
 iconutil -c icns "$BUILD/AppIcon.iconset" -o "$APP/Contents/Resources/AppIcon.icns"
