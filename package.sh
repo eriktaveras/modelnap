@@ -29,7 +29,7 @@ fi
 
 echo "==> fondo del instalador"
 swiftc -O -swift-version 5 -framework AppKit Tools/dmgbackground.swift -o "$BUILD/dmgbackground"
-"$BUILD/dmgbackground" Resources/Fonts "$BUILD/dmg-fondo" "$VERSION"
+"$BUILD/dmgbackground" "$BUILD/dmg-fondo" "$VERSION"
 # TIFF con las dos resoluciones: Finder elige la @2x en pantallas Retina.
 tiffutil -cathidpicheck "$BUILD/dmg-fondo.png" "$BUILD/dmg-fondo@2x.png" -out "$BUILD/dmg-fondo.tiff" >/dev/null
 

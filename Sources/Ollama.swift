@@ -20,7 +20,7 @@ enum Backend: Equatable {
             return label == "homebrew.mxcl.ollama" ? "brew services" : label
         case .app: return "Ollama.app"
         case .binary: return "ollama serve"
-        case .missing: return "no instalado"
+        case .missing: return tr("no instalado")
         }
     }
 
@@ -193,7 +193,7 @@ enum Switch {
             if !FileManager.default.fileExists(atPath: Paths.ownLog.path) {
                 FileManager.default.createFile(atPath: Paths.ownLog.path, contents: nil)
             }
-            guard let log = try? FileHandle(forWritingTo: Paths.ownLog) else { return "No puedo escribir el log" }
+            guard let log = try? FileHandle(forWritingTo: Paths.ownLog) else { return tr("No puedo escribir el log") }
             log.seekToEndOfFile()
             let p = Process()
             p.executableURL = URL(fileURLWithPath: path)
@@ -203,7 +203,7 @@ enum Switch {
             do { try p.run() } catch { return error.localizedDescription }
             return nil
         case .missing:
-            return "Ollama no está instalado."
+            return tr("Ollama no está instalado.")
         }
     }
 
@@ -328,7 +328,7 @@ enum OllamaAPI {
             let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
             if code == 200 { return nil }
             let body = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-            return body?["error"] as? String ?? "Ollama respondió \(code)"
+            return body?["error"] as? String ?? tr("Ollama respondió %d", code)
         } catch {
             return error.localizedDescription
         }
@@ -346,8 +346,29 @@ final class OllamaController: ObservableObject {
     @Published private(set) var installed: [InstalledModel] = []
     @Published private(set) var busyModel: String?
     @Published var error: String?
+    @Published private(set) var memory = SystemMemory.current()
+    /// Segundos sin uso del modelo cargado (nil si no hay modelo o no se mide).
+    @Published private(set) var idleSeconds: TimeInterval?
+    /// Última liberación automática, para contarlo en el panel.
+    @Published private(set) var autoReleased: (models: [String], at: Date)?
+
+    /// Minutos sin uso tras los que se libera la memoria; 0 = nunca.
+    @Published var idleReleaseMinutes: Int = UserDefaults.standard.integer(forKey: "idleReleaseMinutes") {
+        didSet {
+            UserDefaults.standard.set(idleReleaseMinutes, forKey: "idleReleaseMinutes")
+            tracker.touch()
+        }
+    }
+    /// Solo para pruebas: límite en segundos que manda sobre los minutos.
+    var idleLimitOverride: TimeInterval?
+
+    var idleLimit: TimeInterval? {
+        if let idleLimitOverride { return idleLimitOverride }
+        return idleReleaseMinutes > 0 ? TimeInterval(idleReleaseMinutes * 60) : nil
+    }
 
     var onPowerChange: ((Power) -> Void)?
+    var onAutoRelease: (([String]) -> Void)?
 
     private var transition: (target: Power, since: Date)?
     /// El último mecanismo con el que Ollama estuvo encendido. Apagado, la
@@ -356,8 +377,8 @@ final class OllamaController: ObservableObject {
     private var lastActive: Backend?
     private var timer: Timer?
     private var refreshing = false
-
-    let totalMemory = Int64(ProcessInfo.processInfo.physicalMemory)
+    private var tracker = IdleTracker()
+    private var releasing = false
 
     func startPolling() {
         Task { await refresh() }
@@ -398,7 +419,42 @@ final class OllamaController: ObservableObject {
             loaded = []
         }
 
+        memory = SystemMemory.current()
         setPower(derive(up: v != nil))
+        await trackIdle()
+    }
+
+    private func trackIdle() async {
+        guard power == .on, !loaded.isEmpty else {
+            idleSeconds = nil
+            tracker.touch()
+            return
+        }
+        let models = Set(loaded.map(\.name))
+        let cpu = await Task.detached { () -> [pid_t: Double] in
+            var out: [pid_t: Double] = [:]
+            for pid in ProcessCPU.runnerPIDs() {
+                if let s = ProcessCPU.seconds(pid) { out[pid] = s }
+            }
+            return out
+        }.value
+        tracker.sample(cpu: cpu, models: models)
+        let idle = tracker.idleSeconds()
+        idleSeconds = idle
+
+        guard let limit = idleLimit, idle >= limit, busyModel == nil, !releasing else { return }
+        releasing = true
+        let names = loaded.map(\.name)
+        for name in names {
+            if let failure = await OllamaAPI.setKeepAlive(model: name, 0) { error = failure }
+        }
+        autoReleased = (names, Date())
+        onAutoRelease?(names)
+        tracker.touch()
+        releasing = false
+        loaded = await OllamaAPI.loaded()
+        memory = SystemMemory.current()
+        idleSeconds = nil
     }
 
     private func derive(up: Bool) -> Power {
@@ -409,7 +465,7 @@ final class OllamaController: ObservableObject {
                 if up { transition = nil; return .on }
                 if elapsed > 90 {
                     transition = nil
-                    error = "Ollama no respondió en 90 s. Revisa el log (clic derecho en el ícono)."
+                    error = tr("Ollama no respondió en 90 s. Revisa el log (clic derecho en el ícono).")
                     return .off
                 }
                 return .starting
@@ -417,7 +473,7 @@ final class OllamaController: ObservableObject {
                 if !up { transition = nil; return .off }
                 if elapsed > 30 {
                     transition = nil
-                    error = "Ollama sigue respondiendo. Puede que lo haya arrancado otro programa."
+                    error = tr("Ollama sigue respondiendo. Puede que lo haya arrancado otro programa.")
                     return .on
                 }
                 return .stopping
@@ -463,6 +519,8 @@ final class OllamaController: ObservableObject {
         guard busyModel == nil else { return }
         error = nil
         busyModel = model
+        tracker.touch()
+        if value != 0 { autoReleased = nil }
         Task {
             if let failure = await OllamaAPI.setKeepAlive(model: model, value) {
                 error = failure

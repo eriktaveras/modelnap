@@ -5,6 +5,42 @@ import ServiceManagement
 // Uso por terminal, con el mismo camino que el interruptor del panel:
 //   InterruptorOllama --status | --on | --off
 //   InterruptorOllama --snapshot salida.png [dark|light]
+if CommandLine.arguments.contains("--memory") {
+    let m = SystemMemory.current()
+    print("memoria usada \(m.used.memoryGB) de \(m.total.memoryGB) · presión \(m.pressure)")
+    for pid in ProcessCPU.runnerPIDs() {
+        print("runner \(pid): \(String(format: "%.3f", ProcessCPU.seconds(pid) ?? -1)) s de CPU")
+    }
+    exit(0)
+}
+
+// Prueba de la liberación automática con un límite en segundos:
+//   InterruptorOllama --idle-test 20
+if let i = CommandLine.arguments.firstIndex(of: "--idle-test"),
+   let limit = CommandLine.arguments.dropFirst(i + 1).first.flatMap(TimeInterval.init) {
+    MainActor.assumeIsolated {
+        let ollama = OllamaController()
+        ollama.idleLimitOverride = limit
+        let start = Date()
+        ollama.onAutoRelease = { names in
+            print(String(format: "[%5.1fs] liberado automáticamente: %@", Date().timeIntervalSince(start),
+                         names.joined(separator: ", ")))
+        }
+        Task { @MainActor in
+            while Date().timeIntervalSince(start) < limit + 120 {
+                await ollama.refresh()
+                let idle = ollama.idleSeconds.map { String(format: "%.1f", $0) } ?? "-"
+                print(String(format: "[%5.1fs] modelos=%@ sin uso=%@ s", Date().timeIntervalSince(start),
+                             ollama.loaded.map(\.name).joined(separator: ","), idle))
+                if ollama.autoReleased != nil { exit(0) }
+                try? await Task.sleep(nanoseconds: 2_500_000_000)
+            }
+            print("no se liberó a tiempo"); exit(1)
+        }
+        RunLoop.main.run()
+    }
+}
+
 if let flag = CommandLine.arguments.dropFirst().first(where: { ["--status", "--on", "--off"].contains($0) }) {
     func apiUp() -> Bool {
         let sem = DispatchSemaphore(value: 0)
@@ -30,6 +66,9 @@ if let flag = CommandLine.arguments.dropFirst().first(where: { ["--status", "--o
         print(wait(for: false, seconds: 30) ? "apagado (\(backend.summary))" : "sigue respondiendo"); exit(0)
     default:
         print("mecanismo: \(backend.summary) · API \(OllamaAPI.hostLabel): \(apiUp() ? "responde" : "no responde")")
+        let probe = HotKey {}
+        print("atajo \(HotKey.display): \(probe.register() ? "libre" : "ocupado por otra app")")
+        probe.unregister()
         exit(0)
     }
 }
@@ -39,6 +78,29 @@ if let flag = CommandLine.arguments.dropFirst().first(where: { ["--status", "--o
 final class Prefs: ObservableObject {
     private let askedKey = "loginItemAsked"
     @Published private(set) var shouldOfferLogin: Bool
+    @Published var hotKeyError: String?
+    @Published var hotKeyEnabled: Bool = UserDefaults.standard.object(forKey: "hotKeyEnabled") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(hotKeyEnabled, forKey: "hotKeyEnabled")
+            onHotKeyChange?(hotKeyEnabled)
+        }
+    }
+    var onHotKeyChange: ((Bool) -> Void)?
+    var openLog: (() -> Void)?
+    @Published private(set) var language = Language.current
+
+    /// Cambia el idioma y relanza la app: los textos se resuelven al arrancar.
+    func setLanguage(_ lang: Language) {
+        guard lang != language else { return }
+        lang.apply()
+        language = lang
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return }
+        let relaunch = Process()
+        relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
+        relaunch.arguments = ["-c", "sleep 0.6; /usr/bin/open -n \"$0\"", Bundle.main.bundlePath]
+        try? relaunch.run()
+        NSApp.terminate(nil)
+    }
 
     init() {
         shouldOfferLogin = !UserDefaults.standard.bool(forKey: askedKey)
@@ -54,6 +116,7 @@ final class Prefs: ObservableObject {
     }
 
     func toggleLogin() throws {
+        objectWillChange.send()
         UserDefaults.standard.set(true, forKey: askedKey)
         shouldOfferLogin = false
         if opensAtLogin {
@@ -66,14 +129,15 @@ final class Prefs: ObservableObject {
 
 if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > i + 1 {
     let out = URL(fileURLWithPath: CommandLine.arguments[i + 1])
-    let dark = CommandLine.arguments.dropFirst(i + 2).first != "light"
+    let rest = CommandLine.arguments.dropFirst(i + 2)
+    let dark = !rest.contains("light")
+    let settings = rest.contains("settings")
     MainActor.assumeIsolated {
-        Brand.registerFonts()
         let ollama = OllamaController()
         let prefs = Prefs()
         Task { @MainActor in
             await ollama.refresh()
-            let view = ContentView(ollama: ollama, prefs: prefs)
+            let view = ContentView(ollama: ollama, prefs: prefs, showingSettings: settings)
                 .environment(\.colorScheme, dark ? .dark : .light)
             let r = ImageRenderer(content: view)
             r.scale = 2
@@ -97,9 +161,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let prefs = Prefs()
     private var blink: Timer?
     private var blinkOn = true
+    private lazy var hotKey = HotKey { [weak self] in self?.ollama.toggle() }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Brand.registerFonts()
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
@@ -114,6 +178,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.animates = true
 
+        prefs.onHotKeyChange = { [weak self] on in self?.applyHotKey(on) }
+        prefs.openLog = { [weak self] in self?.openLogs() }
+        applyHotKey(prefs.hotKeyEnabled)
+
         ollama.onPowerChange = { [weak self] p in self?.paint(p) }
         paint(ollama.power)
         ollama.startPolling()
@@ -121,6 +189,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Primera vez: se abre el panel para que se vea dónde vive y qué hace.
         if prefs.shouldOfferLogin {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in self?.togglePopover() }
+        }
+    }
+
+    private func applyHotKey(_ on: Bool) {
+        if on {
+            prefs.hotKeyError = hotKey.register()
+                ? nil
+                : tr("Otra app ya usa %@. Desactiva el atajo en Ajustes o libéralo en esa app.", HotKey.display)
+        } else {
+            hotKey.unregister()
+            prefs.hotKeyError = nil
         }
     }
 
@@ -133,15 +212,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch power {
         case .on:
             button.image = Mark.statusImage(dot: .on, dimmed: false)
-            button.toolTip = "Ollama encendido"
+            button.toolTip = tr("Ollama encendido")
         case .off:
             button.image = Mark.statusImage(dot: .none, dimmed: true)
-            button.toolTip = "Ollama apagado"
+            button.toolTip = tr("Ollama apagado")
         case .missing:
             button.image = Mark.statusImage(dot: .none, dimmed: true)
-            button.toolTip = "Ollama no está instalado"
+            button.toolTip = tr("Ollama no está instalado")
         case .starting, .stopping:
-            button.toolTip = power == .starting ? "Ollama arrancando…" : "Ollama apagándose…"
+            button.toolTip = power == .starting ? tr("Ollama arrancando…") : tr("Ollama apagándose…")
             blinkOn = true
             button.image = Mark.statusImage(dot: .busy, dimmed: false)
             blink = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
@@ -181,25 +260,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         switch ollama.power {
         case .missing:
-            add(menu, "Descargar Ollama…", #selector(togglePower))
+            add(menu, tr("Descargar Ollama…"), #selector(togglePower))
         default:
-            let power = add(menu, ollama.power == .on ? "Apagar Ollama" : "Encender Ollama", #selector(togglePower))
+            let power = add(menu, ollama.power == .on ? tr("Apagar Ollama") : tr("Encender Ollama"), #selector(togglePower))
             power.isEnabled = !ollama.power.isTransition
+            if prefs.hotKeyEnabled {
+                power.keyEquivalent = "o"
+                power.keyEquivalentModifierMask = [.command, .option]
+            }
         }
 
         menu.addItem(.separator())
 
-        let logs = add(menu, "Ver el log de Ollama", #selector(openLogs))
+        let logs = add(menu, tr("Ver el log de Ollama"), #selector(openLogs))
         logs.isEnabled = ollama.backend.logURL != nil
 
-        let login = add(menu, "Abrir al iniciar sesión", #selector(toggleLogin))
+        let login = add(menu, tr("Abrir al iniciar sesión"), #selector(toggleLogin))
         login.state = prefs.opensAtLogin ? .on : .off
 
         menu.addItem(.separator())
-        add(menu, "Acerca de Interruptor Ollama", #selector(showAbout))
+        add(menu, tr("Acerca de Interruptor Ollama"), #selector(showAbout))
         add(menu, "Taveras Solutions", #selector(openBrand))
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Salir", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: tr("Salir"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
@@ -227,7 +310,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func toggleLogin() {
         do { try prefs.toggleLogin() } catch {
-            ollama.error = "Inicio de sesión: \(error.localizedDescription)"
+            ollama.error = tr("Inicio de sesión: %@", error.localizedDescription)
         }
     }
 
@@ -235,7 +318,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showAbout() {
         let credits = NSMutableAttributedString(
-            string: "Hecho por Taveras Solutions LLC\ntaverassolutions.com\n\nProyecto independiente, no afiliado a Ollama.",
+            string: tr("Hecho por Taveras Solutions LLC\ntaverassolutions.com\n\nProyecto independiente, no afiliado a Ollama."),
             attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor])
         let link = (credits.string as NSString).range(of: "taverassolutions.com")
         credits.addAttribute(.link, value: Paths.brand, range: link)

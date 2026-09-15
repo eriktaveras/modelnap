@@ -10,10 +10,23 @@ Hecha por [Taveras Solutions](https://taverassolutions.com). Proyecto independie
 
 - **Clic en el cerebro** de la barra de menús: se abre el panel.
   - **Botón de encendido**: apaga o enciende Ollama.
-  - **Memoria**: el modelo cargado y cuánto ocupa de la RAM, con *Liberar* para sacarlo sin apagar.
+  - **Memoria del Mac**: cuánta RAM usa el Mac (mismo cálculo que el Monitor de Actividad), qué parte es el
+    modelo, la presión de memoria del sistema y *Liberar* para sacar el modelo sin apagar Ollama.
   - **Modelos instalados**: pasa el ratón por encima y pulsa *Cargar*.
+- **⌥⌘O** desde cualquier app enciende o apaga Ollama (se desactiva en Ajustes).
+- **Ajustes** (engranaje):
+  - **Liberar memoria sin uso**: nunca, 5, 15, 30 o 60 min. Si el modelo no genera nada en ese tiempo se
+    descarga; Ollama sigue encendido y lo recarga con el siguiente mensaje.
+  - Atajo de teclado, abrir al iniciar sesión e idioma (automático, español o inglés).
 - **Clic derecho**: encender/apagar, ver el log, abrir al iniciar sesión, *Acerca de*, salir.
-- **Cuadrado del ícono**: teal = encendido, naranja parpadeando = arrancando o apagando, sin cuadrado = apagado.
+- **Punto del ícono**: verde = encendido, ámbar parpadeando = arrancando o apagando, sin punto = apagado.
+
+### Cómo detecta que un modelo está «sin uso»
+
+Ollama no expone la hora de la última petición. Cada modelo cargado corre en un proceso `ollama runner` que
+solo gasta CPU mientras trabaja: medido con gemma4 26B, 0,06 s de CPU en 30 s de reposo frente a 0,99 s al
+generar 104 tokens. La app suma la CPU de los runners cada 2,5 s; si sube más de 0,08 s, o cambia el modelo
+cargado, cuenta como uso. La lógica está en `IdleTracker` (`Sources/Activity.swift`) y tiene pruebas.
 
 ## Cómo sabe apagar Ollama
 
@@ -38,13 +51,16 @@ y notarizados por Apple, así que abren sin avisos de Gatekeeper.
 ```bash
 B="/Applications/Interruptor Ollama.app/Contents/MacOS/InterruptorOllama"
 "$B" --status | --on | --off
-"$B" --snapshot panel.png [dark|light]   # captura del panel sin abrir la barra
+"$B" --memory                            # memoria del Mac y CPU de los runners
+"$B" --idle-test 20                      # prueba la liberación automática con 20 s de límite
+"$B" --snapshot panel.png [dark|light] [settings] [-AppleLanguages "(en)"]
 ```
 
 ## Compilar
 
 ```bash
 ./build.sh            # app en ./build
+./build.sh --test     # pruebas de IdleTracker
 ./build.sh --install  # copia a ~/Applications y la relanza
 ./package.sh          # instalador dist/Interruptor-Ollama-<VERSION>.dmg (+ .sha256)
 ```
@@ -60,4 +76,4 @@ Firma con runtime endurecido, notariza la app y el dmg, y grapa los dos tickets.
 build ad-hoc solo para pruebas locales. El perfil `taveras-notary` vive en el llavero
 (`xcrun notarytool store-credentials`).
 
-Tipografías: Instrument Serif, DM Sans y JetBrains Mono (SIL Open Font License, en `Resources/Fonts`).
+Traducciones en `Resources/<idioma>.lproj/Localizable.strings`; la clave es el texto en español.

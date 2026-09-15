@@ -1,40 +1,31 @@
 import AppKit
-import CoreText
 
-// Fondo de la ventana del .dmg (660x440 pt, @1x y @2x), con la identidad de
-// taverassolutions.com. Los íconos los coloca Finder encima: app en (170, 200)
+// Fondo de la ventana del .dmg (660x440 pt, @1x y @2x), con la identidad verde
+// de la app. Los íconos los coloca Finder encima: app en (170, 200)
 // y Aplicaciones en (490, 200), coordenadas desde arriba a la izquierda.
-//   dmgbackground <fonts-dir> <salida-sin-extension> <version>
+//   dmgbackground <salida-sin-extension> <version>
 
 let args = CommandLine.arguments
-guard args.count > 3 else {
-    FileHandle.standardError.write(Data("uso: dmgbackground <fonts> <salida> <version>\n".utf8))
+guard args.count > 2 else {
+    FileHandle.standardError.write(Data("uso: dmgbackground <salida-sin-extension> <version>\n".utf8))
     exit(1)
 }
-let fontsDir = URL(fileURLWithPath: args[1])
-let outBase = args[2]
-let version = args[3]
+let outBase = args[1]
+let version = args[2]
 
-let fontFiles = (try? FileManager.default.contentsOfDirectory(at: fontsDir, includingPropertiesForKeys: nil)) ?? []
-CTFontManagerRegisterFontURLs(fontFiles.filter { $0.pathExtension == "ttf" } as CFArray, .process, false, nil)
-
-func font(_ family: String, _ size: CGFloat, weight: NSFont.Weight = .regular) -> NSFont {
-    let desc = NSFontDescriptor(fontAttributes: [
-        .family: family,
-        .traits: [NSFontDescriptor.TraitKey.weight: weight],
-    ])
-    return NSFont(descriptor: desc, size: size) ?? .systemFont(ofSize: size, weight: weight)
-}
+func font(_ size: CGFloat, weight: NSFont.Weight = .regular) -> NSFont { .systemFont(ofSize: size, weight: weight) }
+func mono(_ size: CGFloat, weight: NSFont.Weight = .regular) -> NSFont { .monospacedSystemFont(ofSize: size, weight: weight) }
 
 func hex(_ v: UInt32, _ a: CGFloat = 1) -> NSColor {
     NSColor(srgbRed: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255,
             blue: CGFloat(v & 0xFF) / 255, alpha: a)
 }
 
+// Paleta clara de la identidad verde (la de la primera versión y Archivo Drop).
 let W: CGFloat = 660, H: CGFloat = 440
-let paper = hex(0xFAFAFA), card = hex(0xFFFFFF), line = hex(0xE0E0E0)
-let ink = hex(0x111111), secondary = hex(0x444444), muted = hex(0x888888)
-let blue = hex(0x0047AB), warm = hex(0xD34418)
+let paper = hex(0xF4F7F5), card = hex(0xFFFFFF), line = hex(0xDFE8E3)
+let ink = hex(0x0F1614), secondary = hex(0x5C6B64), muted = hex(0x8A9992)
+let green = hex(0x047857), greenSoft = hex(0xE6F4EE)
 
 func text(_ s: String, _ f: NSFont, _ c: NSColor, at p: CGPoint, kern: CGFloat = 0) {
     NSAttributedString(string: s, attributes: [.font: f, .foregroundColor: c, .kern: kern]).draw(at: p)
@@ -60,85 +51,92 @@ func render(scale: CGFloat) -> Data {
     paper.setFill()
     CGRect(x: 0, y: 0, width: W, height: H).fill()
 
-    // Retícula técnica muy tenue, como el fondo de la web.
-    hex(0x111111, 0.035).setFill()
-    stride(from: CGFloat(20), to: W, by: 20).forEach { x in
-        stride(from: CGFloat(20), to: H, by: 20).forEach { y in
-            CGRect(x: x, y: y, width: 1, height: 1).fill()
-        }
+    // Cabecera: cerebro verde, nombre y versión.
+    let symbolConfig = NSImage.SymbolConfiguration(pointSize: 20, weight: .medium)
+        .applying(NSImage.SymbolConfiguration(paletteColors: [green]))
+    if let brain = NSImage(systemSymbolName: "brain.fill", accessibilityDescription: nil)?
+        .withSymbolConfiguration(symbolConfig) {
+        brain.draw(in: CGRect(x: 32, y: 34, width: brain.size.width, height: brain.size.height),
+                   from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
     }
+    text("Interruptor Ollama", font(24, weight: .bold), ink, at: CGPoint(x: 66, y: 30))
+    text(tr("Enciende y apaga Ollama desde la barra de menús."), font(13), secondary, at: CGPoint(x: 67, y: 62))
+    text("Turn Ollama on and off from the menu bar.", font(11), muted, at: CGPoint(x: 67, y: 81))
 
-    // Cabecera: logotipo y versión.
-    blue.setFill()
-    CGRect(x: 32, y: 30, width: 8, height: 8).fill()
-    text("TAVERAS SOLUTIONS", font("JetBrains Mono", 11, weight: .semibold), ink, at: CGPoint(x: 47, y: 26), kern: -0.2)
-    let v = "V\(version)"
-    let vf = font("JetBrains Mono", 10)
-    let vw = (v as NSString).size(withAttributes: [.font: vf, .kern: 1.2]).width
-    text(v, vf, muted, at: CGPoint(x: W - 32 - vw, y: 27), kern: 1.2)
-
-    line.setFill()
-    CGRect(x: 32, y: 52, width: W - 64, height: 1).fill()
-
-    // Título.
-    text("Interruptor Ollama", font("Instrument Serif", 34), ink, at: CGPoint(x: 32, y: 62))
-    text("Enciende y apaga Ollama desde la barra de menús.", font("DM Sans", 13), secondary,
-         at: CGPoint(x: 34, y: 112))
+    let v = "v\(version)"
+    let vf = mono(11)
+    let vw = (v as NSString).size(withAttributes: [.font: vf]).width
+    let pill = CGRect(x: W - 32 - vw - 16, y: 36, width: vw + 16, height: 20)
+    greenSoft.setFill()
+    NSBezierPath(roundedRect: pill, xRadius: 10, yRadius: 10).fill()
+    text(v, vf, green, at: CGPoint(x: pill.minX + 8, y: pill.minY + 3))
 
     // Flecha entre la app y Aplicaciones.
     let y: CGFloat = 200
-    ink.setStroke()
+    green.setStroke()
     let arrow = NSBezierPath()
-    arrow.lineWidth = 1.5
+    arrow.lineWidth = 2
+    arrow.lineCapStyle = .round
     arrow.move(to: CGPoint(x: 262, y: y))
-    arrow.line(to: CGPoint(x: 396, y: y))
+    arrow.line(to: CGPoint(x: 394, y: y))
     arrow.stroke()
     let head = NSBezierPath()
     head.move(to: CGPoint(x: 398, y: y))
-    head.line(to: CGPoint(x: 388, y: y - 6))
-    head.line(to: CGPoint(x: 388, y: y + 6))
+    head.line(to: CGPoint(x: 387, y: y - 6.5))
+    head.line(to: CGPoint(x: 387, y: y + 6.5))
     head.close()
-    ink.setFill()
+    green.setFill()
     head.fill()
-    let drag = "ARRASTRA"
-    let df = font("JetBrains Mono", 10, weight: .medium)
-    let dw = (drag as NSString).size(withAttributes: [.font: df, .kern: 1.6]).width
-    text(drag, df, muted, at: CGPoint(x: 330 - dw / 2, y: y - 24), kern: 1.6)
+    let drag = tr("arrastra")
+    let df = font(11, weight: .semibold)
+    let dw = (drag as NSString).size(withAttributes: [.font: df]).width
+    text(drag, df, green, at: CGPoint(x: 330 - dw / 2, y: y - 26))
 
     // Qué hacer después de arrastrar.
-    let box = CGRect(x: 32, y: 318, width: W - 64, height: 88)
+    let box = CGRect(x: 32, y: 318, width: W - 64, height: 84)
     card.setFill()
-    NSBezierPath(rect: box).fill()
+    let boxPath = NSBezierPath(roundedRect: box, xRadius: 12, yRadius: 12)
+    boxPath.fill()
     line.setStroke()
-    let border = NSBezierPath(rect: box.insetBy(dx: 0.5, dy: 0.5))
+    let border = NSBezierPath(roundedRect: box.insetBy(dx: 0.5, dy: 0.5), xRadius: 12, yRadius: 12)
     border.lineWidth = 1
     border.stroke()
-    blue.setFill()
-    CGRect(x: box.minX, y: box.minY, width: 2, height: box.height).fill()
 
-    text("DESPUÉS", font("JetBrains Mono", 9.5, weight: .medium), blue,
-         at: CGPoint(x: box.minX + 18, y: box.minY + 14), kern: 1.4)
+    let dot = CGRect(x: box.minX + 18, y: box.minY + 19, width: 8, height: 8)
+    green.setFill()
+    NSBezierPath(ovalIn: dot).fill()
+    text(tr("Después"), font(12, weight: .semibold), ink, at: CGPoint(x: box.minX + 34, y: box.minY + 14))
 
     let body = NSMutableAttributedString()
-    let sans = font("DM Sans", 12)
-    let bold = font("DM Sans", 12, weight: .semibold)
+    let sans = font(12)
+    let bold = font(12, weight: .semibold)
     let style = NSMutableParagraphStyle()
     style.lineSpacing = 2
-    body.append(NSAttributedString(string: "Abre la app desde Aplicaciones. Vive en la ",
+    body.append(NSAttributedString(string: tr("Abre la app desde Aplicaciones. Vive en la "),
                                    attributes: [.font: sans, .foregroundColor: secondary]))
-    body.append(NSAttributedString(string: "barra de menús, arriba a la derecha",
+    body.append(NSAttributedString(string: tr("barra de menús, arriba a la derecha"),
                                    attributes: [.font: bold, .foregroundColor: ink]))
-    body.append(NSAttributedString(string: ": un cerebro con un cuadrado de color. Clic para abrir el panel.",
+    body.append(NSAttributedString(string: tr(": un cerebro con un punto verde. Clic para abrir el panel."),
                                    attributes: [.font: sans, .foregroundColor: secondary]))
     body.addAttribute(.paragraphStyle, value: style, range: NSRange(location: 0, length: body.length))
-    paragraph(body, in: CGRect(x: box.minX + 18, y: box.minY + 33, width: box.width - 36, height: 50))
+    paragraph(body, in: CGRect(x: box.minX + 34, y: box.minY + 34, width: box.width - 52, height: 44))
 
-    text("Firmada y notarizada por Apple · No afiliado a Ollama · taverassolutions.com",
-         font("JetBrains Mono", 9), muted, at: CGPoint(x: 32, y: 416))
+    // Pie: crédito y aviso.
+    green.setFill()
+    NSBezierPath(ovalIn: CGRect(x: 32, y: 419, width: 6, height: 6)).fill()
+    text("Taveras Solutions", font(10.5, weight: .semibold), secondary, at: CGPoint(x: 43, y: 414))
+    let legal = tr("Firmada y notarizada por Apple · No afiliado a Ollama")
+    let lf = font(10)
+    let lw = (legal as NSString).size(withAttributes: [.font: lf]).width
+    text(legal, lf, muted, at: CGPoint(x: W - 32 - lw, y: 415))
 
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!
 }
+
+// El dmg se ve en el idioma de quien lo abre, pero la imagen es una sola: va en
+// español (idioma base) con la línea en inglés debajo del subtítulo.
+func tr(_ s: String) -> String { s }
 
 try render(scale: 1).write(to: URL(fileURLWithPath: "\(outBase).png"))
 try render(scale: 2).write(to: URL(fileURLWithPath: "\(outBase)@2x.png"))

@@ -3,10 +3,18 @@
 # Sin proyecto de Xcode: swiftc directo.
 #   ./build.sh            -> construye en ./build
 #   ./build.sh --install  -> además lo copia a ~/Applications y lo relanza
+#   ./build.sh --test     -> solo el banco de pruebas de IdleTracker
 # Para el instalador .dmg que se comparte: ./package.sh
 set -euo pipefail
 
 cd "$(dirname "$0")"
+
+if [[ "${1:-}" == "--test" ]]; then
+  mkdir -p build
+  swiftc -swift-version 5 Sources/Activity.swift Sources/Ollama.swift Sources/SystemMemory.swift Sources/L10n.swift Tests/main.swift \
+    -o build/idle-tests 2>&1 | grep -v "^$" || true
+  exec ./build/idle-tests
+fi
 ROOT="$PWD"
 BUILD="$ROOT/build"
 APP="$BUILD/Interruptor Ollama.app"
@@ -27,8 +35,8 @@ lipo -create "$BUILD/InterruptorOllama-arm64" "$BUILD/InterruptorOllama-x86_64" 
   -output "$APP/Contents/MacOS/InterruptorOllama"
 rm "$BUILD"/InterruptorOllama-{arm64,x86_64}
 
-echo "==> fuentes (OFL)"
-cp -R Resources/Fonts "$APP/Contents/Resources/Fonts"
+echo "==> traducciones"
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 echo "==> icono"
 swiftc -O -swift-version 5 -framework AppKit \
@@ -52,6 +60,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleDevelopmentRegion</key><string>es</string>
+  <key>CFBundleLocalizations</key><array><string>es</string><string>en</string></array>
   <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
   <key>LSMinimumSystemVersion</key><string>$MIN_OS</string>
   <key>NSHumanReadableCopyright</key><string>© 2026 Taveras Solutions LLC · No afiliado a Ollama</string>

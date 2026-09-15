@@ -5,6 +5,13 @@ struct ContentView: View {
     @ObservedObject var ollama: OllamaController
     @ObservedObject var prefs: Prefs
     @Environment(\.colorScheme) private var scheme
+    @State private var showingSettings: Bool
+
+    init(ollama: OllamaController, prefs: Prefs, showingSettings: Bool = false) {
+        self.ollama = ollama
+        self.prefs = prefs
+        _showingSettings = State(initialValue: showingSettings)
+    }
 
     private var t: Theme { Theme.of(scheme) }
 
@@ -14,16 +21,23 @@ struct ContentView: View {
             Rectangle().fill(t.line).frame(height: 1)
 
             VStack(spacing: 10) {
-                PowerHero(ollama: ollama, theme: t)
-                if let error = ollama.error {
-                    Banner(text: error, theme: t) { ollama.error = nil }
-                }
-                if prefs.shouldOfferLogin {
-                    LoginOffer(theme: t, accept: { prefs.answerLogin(true) }, decline: { prefs.answerLogin(false) })
-                }
-                if ollama.power != .missing {
-                    MemoryCard(ollama: ollama, theme: t)
-                    ModelList(ollama: ollama, theme: t)
+                if showingSettings {
+                    SettingsView(ollama: ollama, prefs: prefs, theme: t)
+                } else {
+                    PowerHero(ollama: ollama, theme: t)
+                    if let error = ollama.error {
+                        Banner(text: error, theme: t) { ollama.error = nil }
+                    }
+                    if let hotKeyError = prefs.hotKeyError {
+                        Banner(text: hotKeyError, theme: t) { prefs.hotKeyError = nil }
+                    }
+                    if prefs.shouldOfferLogin {
+                        LoginOffer(theme: t, accept: { prefs.answerLogin(true) }, decline: { prefs.answerLogin(false) })
+                    }
+                    if ollama.power != .missing {
+                        MemoryCard(ollama: ollama, theme: t)
+                        ModelList(ollama: ollama, theme: t)
+                    }
                 }
             }
             .padding(14)
@@ -37,9 +51,12 @@ struct ContentView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 10) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Interruptor Ollama")
+        HStack(alignment: .center, spacing: 9) {
+            Image(systemName: showingSettings ? "gearshape.fill" : "brain.fill")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(ollama.power == .on || showingSettings ? t.accent : t.muted)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(showingSettings ? tr("Ajustes") : "Interruptor Ollama")
                     .font(Brand.sans(14, .semibold))
                 Text(subtitle)
                     .font(Brand.mono(10))
@@ -47,13 +64,24 @@ struct ContentView: View {
                     .lineLimit(1)
             }
             Spacer()
-            StatePill(power: ollama.power, theme: t)
+            if !showingSettings { StatePill(power: ollama.power, theme: t) }
+            Button { showingSettings.toggle() } label: {
+                Image(systemName: showingSettings ? "xmark" : "gearshape")
+                    .font(.system(size: 12, weight: .medium))
+                    .frame(width: 26, height: 24)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(showingSettings ? t.track : .clear))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(t.secondary)
+            .help(showingSettings ? tr("Cerrar ajustes") : tr("Ajustes"))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 11)
     }
 
     private var subtitle: String {
+        if showingSettings { return "v\(Bundle.main.shortVersion)" }
         if let v = ollama.version { return "v\(v) · \(ollama.backend.summary)" }
         return ollama.backend.summary
     }
@@ -61,24 +89,27 @@ struct ContentView: View {
     private var footer: some View {
         HStack(spacing: 8) {
             Button { NSWorkspace.shared.open(Paths.brand) } label: {
-                HStack(spacing: 6) {
-                    Rectangle().fill(t.accent).frame(width: 6, height: 6)
-                    Text("TAVERAS SOLUTIONS")
-                        .font(Brand.mono(9.5, .semibold))
-                        .tracking(-0.2)
-                        .foregroundStyle(t.fg)
+                HStack(spacing: 5) {
+                    Circle().fill(t.accent).frame(width: 6, height: 6)
+                    Text("Taveras Solutions")
+                        .font(Brand.sans(10.5, .semibold))
+                        .foregroundStyle(t.secondary)
                 }
             }
             .buttonStyle(.plain)
             .help("taverassolutions.com")
             Spacer()
-            Text("No afiliado a Ollama")
-                .font(Brand.mono(9))
+            Text(prefs.hotKeyEnabled ? "\(HotKey.display) · \(tr("No afiliado a Ollama"))" : tr("No afiliado a Ollama"))
+                .font(Brand.sans(10))
                 .foregroundStyle(t.muted)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
     }
+}
+
+extension Bundle {
+    var shortVersion: String { infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev" }
 }
 
 // MARK: - piezas comunes
@@ -98,13 +129,39 @@ private struct Card<Content: View>: View {
 private struct Eyebrow: View {
     let text: String
     let theme: Theme
+    var color: Color?
     var body: some View {
-        Text(text.uppercased())
-            .font(Brand.mono(9.5, .medium))
-            .tracking(1.2)
-            .foregroundStyle(theme.muted)
+        Text(text)
+            .font(Brand.sans(11, .semibold))
+            .foregroundStyle(color ?? theme.secondary)
     }
 }
+
+/// Interruptor con la marca: rectangular, sin el brillo del de sistema.
+private struct BrandSwitch: View {
+    let isOn: Bool
+    let theme: Theme
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                Capsule()
+                    .fill(isOn ? theme.accent : theme.track)
+                    .overlay(Capsule().strokeBorder(isOn ? theme.accent : theme.line))
+                    .frame(width: 36, height: 20)
+                Circle()
+                    .fill(isOn ? theme.onAccent : theme.muted)
+                    .frame(width: 14, height: 14)
+                    .padding(.horizontal, 3)
+            }
+            .animation(.easeInOut(duration: 0.15), value: isOn)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private func minutes(_ seconds: TimeInterval) -> Int { max(0, Int(seconds / 60)) }
 
 // MARK: - botón grande
 
@@ -126,23 +183,23 @@ struct PowerHero: View {
 
     private var title: String {
         switch ollama.power {
-        case .on: return "Encendido"
-        case .starting: return "Arrancando…"
-        case .stopping: return "Apagando…"
-        case .off: return "Apagado"
-        case .missing: return "Sin Ollama"
+        case .on: return tr("Encendido")
+        case .starting: return tr("Arrancando…")
+        case .stopping: return tr("Apagando…")
+        case .off: return tr("Apagado")
+        case .missing: return tr("Sin Ollama")
         }
     }
 
     private var detail: String {
         switch ollama.power {
         case .on:
-            if let m = ollama.loaded.first { return "\(m.name) en memoria" }
-            return "Sin modelo en memoria. Se carga con el primer mensaje."
-        case .starting: return "Esperando a la API en \(OllamaAPI.hostLabel)"
-        case .stopping: return "Liberando la memoria del modelo"
-        case .off: return "Las apps que usan Ollama no responden mientras esté apagado."
-        case .missing: return "No lo encuentro en este Mac. Pulsa para descargarlo de ollama.com."
+            if let m = ollama.loaded.first { return tr("%@ en memoria", m.name) }
+            return tr("Sin modelo en memoria. Se carga con el primer mensaje.")
+        case .starting: return tr("Esperando a la API en %@", OllamaAPI.hostLabel)
+        case .stopping: return tr("Liberando la memoria del modelo")
+        case .off: return tr("Las apps que usan Ollama no responden mientras esté apagado.")
+        case .missing: return tr("No lo encuentro en este Mac. Pulsa para descargarlo de ollama.com.")
         }
     }
 
@@ -169,11 +226,11 @@ struct PowerHero: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(ollama.power.isTransition)
-                .help(ollama.power == .on ? "Apagar Ollama" : ollama.power == .missing ? "Descargar Ollama" : "Encender Ollama")
+                .help(ollama.power == .on ? tr("Apagar Ollama") : ollama.power == .missing ? tr("Descargar Ollama") : tr("Encender Ollama"))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(Brand.serif(30))
+                        .font(Brand.title(17))
                         .foregroundStyle(ollama.power == .off ? t.secondary : t.fg)
                     Text(detail)
                         .font(Brand.sans(11.5))
@@ -198,30 +255,57 @@ struct MemoryCard: View {
     let theme: Theme
     private var t: Theme { theme }
 
-    private var used: Int64 { ollama.loaded.reduce(0) { $0 + $1.bytes } }
+    private var model: Int64 { ollama.loaded.reduce(0) { $0 + $1.bytes } }
+    private var mem: SystemMemory { ollama.memory }
+
+    private var pressure: (String, Color) {
+        switch mem.pressure {
+        case .normal: return (tr("presión normal"), t.on)
+        case .warning: return (tr("presión alta"), t.warm)
+        case .critical: return (tr("presión crítica"), t.danger)
+        }
+    }
 
     var body: some View {
         Card(theme: t) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Eyebrow(text: "Memoria", theme: t)
+                HStack(spacing: 6) {
+                    Eyebrow(text: tr("Memoria del Mac"), theme: t)
                     Spacer()
-                    Text("\(used.gigabytes) / \(ollama.totalMemory / 1_073_741_824) GB")
-                        .font(Brand.mono(10.5))
-                        .foregroundStyle(t.secondary)
+                    Circle().fill(pressure.1).frame(width: 6, height: 6)
+                    Text(pressure.0)
+                        .font(Brand.sans(10.5, .medium))
+                        .foregroundStyle(pressure.1)
                 }
 
                 GeometryReader { geo in
-                    let frac = min(1, Double(used) / Double(max(ollama.totalMemory, 1)))
+                    let total = Double(max(mem.total, 1))
+                    let usedW = geo.size.width * min(1, Double(mem.used) / total)
+                    let modelW = min(usedW, geo.size.width * min(1, Double(model) / total))
                     ZStack(alignment: .leading) {
-                        Rectangle().fill(t.track)
-                        Rectangle()
-                            .fill(t.accent)
-                            .frame(width: max(frac > 0 ? 4 : 0, geo.size.width * frac))
+                        Capsule().fill(t.track)
+                        Capsule().fill(t.muted.opacity(0.55)).frame(width: usedW)
+                        Capsule()
+                            .fill(LinearGradient(colors: [t.accent.opacity(0.75), t.accent],
+                                                 startPoint: .leading, endPoint: .trailing))
+                            .frame(width: modelW > 0 ? max(6, modelW) : 0)
                     }
+                    .clipShape(Capsule())
                 }
-                .frame(height: 6)
-                .animation(.easeInOut(duration: 0.4), value: used)
+                .frame(height: 8)
+                .animation(.easeInOut(duration: 0.4), value: mem.used)
+
+                HStack(spacing: 12) {
+                    legend(color: t.accent, label: tr("Modelo"), value: model.memoryGB)
+                    legend(color: t.muted.opacity(0.55), label: tr("Resto"), value: max(0, mem.used - model).memoryGB)
+                    Spacer(minLength: 4)
+                    Text("\(mem.used.memoryGB) / \(mem.total / 1_073_741_824) GB")
+                        .font(Brand.mono(10))
+                        .foregroundStyle(t.secondary)
+                        .fixedSize()
+                }
+
+                Rectangle().fill(t.line).frame(height: 1)
 
                 if let m = ollama.loaded.first {
                     HStack(spacing: 8) {
@@ -229,10 +313,10 @@ struct MemoryCard: View {
                             Text(m.name)
                                 .font(Brand.mono(11.5, .medium))
                                 .lineLimit(1)
-                            Text([m.bytes.gigabytes, m.context.map { "contexto \($0 / 1024)K" }]
-                                    .compactMap { $0 }.joined(separator: " · "))
+                            Text(idleLine(m))
                                 .font(Brand.sans(10.5))
                                 .foregroundStyle(t.muted)
+                                .lineLimit(1)
                         }
                         Spacer()
                         Button {
@@ -241,21 +325,51 @@ struct MemoryCard: View {
                             if ollama.busyModel == m.name {
                                 ProgressView().controlSize(.mini)
                             } else {
-                                Label("Liberar", systemImage: "eject").font(Brand.sans(11, .medium))
+                                Label(tr("Liberar"), systemImage: "eject").font(Brand.sans(11, .medium))
                             }
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         .disabled(ollama.busyModel != nil)
-                        .help("Saca el modelo de la memoria sin apagar Ollama")
+                        .help(tr("Saca el modelo de la memoria sin apagar Ollama"))
                     }
+                } else if let released = ollama.autoReleased {
+                    Text(tr("Liberado solo a las %@ tras %d min sin uso",
+                            released.at.formatted(date: .omitted, time: .shortened),
+                            ollama.idleReleaseMinutes))
+                        .font(Brand.sans(11))
+                        .foregroundStyle(t.muted)
                 } else {
-                    Text(ollama.power == .on ? "Ningún modelo en memoria" : "Ollama apagado · 0 GB en uso")
+                    Text(ollama.power == .on ? tr("Ningún modelo en memoria") : tr("Ollama apagado · 0 GB en uso"))
                         .font(Brand.sans(11))
                         .foregroundStyle(t.muted)
                 }
             }
         }
+    }
+
+    private func legend(color: Color, label: String, value: String) -> some View {
+        HStack(alignment: .center, spacing: 4) {
+            Circle().fill(color).frame(width: 7, height: 7)
+            Text("\(label) \(value.replacingOccurrences(of: " GB", with: ""))")
+                .font(Brand.mono(10))
+                .foregroundStyle(t.secondary)
+                .fixedSize()
+        }
+    }
+
+    private func idleLine(_ m: LoadedModel) -> String {
+        var parts = [m.bytes.memoryGB]
+        if let idle = ollama.idleSeconds, idle >= 60 {
+            parts.append(tr("sin uso %d min", minutes(idle)))
+        }
+        if let limit = ollama.idleLimit, let idle = ollama.idleSeconds {
+            let left = max(0, limit - idle)
+            parts.append(left < 60 ? tr("se libera en <1 min") : tr("se libera en %d min", Int(ceil(left / 60))))
+        } else if let ctx = m.context {
+            parts.append(tr("contexto %dK", ctx / 1024))
+        }
+        return parts.joined(separator: " · ")
     }
 }
 
@@ -268,12 +382,12 @@ struct ModelList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Eyebrow(text: "Modelos instalados", theme: t)
+            Eyebrow(text: tr("Modelos instalados"), theme: t)
                 .padding(.horizontal, 2)
 
             if ollama.installed.isEmpty {
                 Card(theme: t) {
-                    Text(ollama.power == .on ? "No hay modelos. Prueba `ollama pull llama3.2`." : "Enciende Ollama para ver los modelos")
+                    Text(ollama.power == .on ? tr("No hay modelos. Prueba `ollama pull llama3.2`.") : tr("Enciende Ollama para ver los modelos"))
                         .font(Brand.sans(11))
                         .foregroundStyle(t.muted)
                 }
@@ -291,10 +405,8 @@ struct ModelList: View {
             }
         }
     }
-}
 
-private extension ModelList {
-    var rows: some View {
+    private var rows: some View {
         VStack(spacing: 0) {
             ForEach(Array(ollama.installed.enumerated()), id: \.element.id) { idx, model in
                 if idx > 0 { Rectangle().fill(t.line).frame(height: 1) }
@@ -316,9 +428,9 @@ struct ModelRow: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            Rectangle()
+            Circle()
                 .fill(isLoaded ? t.on : t.line)
-                .frame(width: 6, height: 6)
+                .frame(width: 7, height: 7)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(model.name)
@@ -327,8 +439,8 @@ struct ModelRow: View {
                 HStack(spacing: 5) {
                     Text([model.bytes.gigabytes, model.quantization].compactMap { $0 }.joined(separator: " · "))
                         .font(Brand.sans(10.5))
-                    if model.vision { Chip(text: "visión", theme: t) }
-                    if model.tools { Chip(text: "herramientas", theme: t) }
+                    if model.vision { Chip(text: tr("visión"), theme: t) }
+                    if model.tools { Chip(text: tr("herramientas"), theme: t) }
                 }
                 .foregroundStyle(t.muted)
             }
@@ -337,18 +449,17 @@ struct ModelRow: View {
             if isBusy {
                 ProgressView().controlSize(.small)
             } else if isLoaded {
-                Text("EN USO")
-                    .font(Brand.mono(9, .bold))
-                    .tracking(0.8)
+                Text(tr("EN USO").lowercased())
+                    .font(Brand.sans(10.5, .semibold))
                     .foregroundStyle(t.on)
-                    .padding(.horizontal, 6).padding(.vertical, 3)
-                    .background(Rectangle().fill(t.onSoft))
+                    .padding(.horizontal, 7).padding(.vertical, 2)
+                    .background(Capsule().fill(t.onSoft))
             } else if hover && ollama.power == .on && ollama.busyModel == nil {
-                Button("Cargar") { ollama.load(model.name) }
+                Button(tr("Cargar")) { ollama.load(model.name) }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .tint(t.accent)
-                    .help("Carga este modelo en memoria")
+                    .help(tr("Carga este modelo en memoria"))
             }
         }
         .padding(.horizontal, 11)
@@ -357,6 +468,117 @@ struct ModelRow: View {
         .onHover { hover = $0 }
     }
 }
+
+// MARK: - ajustes
+
+struct SettingsView: View {
+    @ObservedObject var ollama: OllamaController
+    @ObservedObject var prefs: Prefs
+    let theme: Theme
+    private var t: Theme { theme }
+
+    static let idleChoices = [0, 5, 15, 30, 60]
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Card(theme: t) {
+                VStack(alignment: .leading, spacing: 9) {
+                    Eyebrow(text: tr("Liberar memoria sin uso"), theme: t)
+                    HStack(spacing: 0) {
+                        ForEach(Self.idleChoices, id: \.self) { m in
+                            let selected = ollama.idleReleaseMinutes == m
+                            Button { ollama.idleReleaseMinutes = m } label: {
+                                Text(m == 0 ? tr("Nunca") : "\(m) min")
+                                    .font(Brand.sans(11, selected ? .semibold : .regular))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 6)
+                                    .foregroundStyle(selected ? t.onAccent : t.secondary)
+                                    .background(RoundedRectangle(cornerRadius: 6).fill(selected ? t.accent : Color.clear))
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(2)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(t.track))
+
+                    Text(tr("Si el modelo no genera nada en ese tiempo, se saca de la memoria. Ollama sigue encendido y lo vuelve a cargar con el siguiente mensaje."))
+                        .font(Brand.sans(10.5))
+                        .foregroundStyle(t.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Card(theme: t) {
+                VStack(spacing: 11) {
+                    settingRow(title: tr("Atajo de teclado"),
+                               detail: tr("%@ enciende o apaga Ollama desde cualquier app", HotKey.display),
+                               isOn: prefs.hotKeyEnabled) { prefs.hotKeyEnabled.toggle() }
+                    Rectangle().fill(t.line).frame(height: 1)
+                    settingRow(title: tr("Abrir al iniciar sesión"),
+                               detail: tr("El interruptor siempre a mano en la barra"),
+                               isOn: prefs.opensAtLogin) { try? prefs.toggleLogin() }
+                }
+            }
+
+            Card(theme: t) {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(tr("Idioma")).font(Brand.sans(12, .semibold))
+                        Text(tr("La app se reinicia al cambiarlo"))
+                            .font(Brand.sans(10.5))
+                            .foregroundStyle(t.muted)
+                    }
+                    Spacer(minLength: 8)
+                    HStack(spacing: 0) {
+                        ForEach(Language.allCases, id: \.self) { lang in
+                            let selected = prefs.language == lang
+                            Button { prefs.setLanguage(lang) } label: {
+                                Text(lang.label)
+                                    .font(Brand.sans(11, selected ? .semibold : .regular))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 5)
+                                    .foregroundStyle(selected ? t.onAccent : t.secondary)
+                                    .background(RoundedRectangle(cornerRadius: 6).fill(selected ? t.accent : Color.clear))
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(2)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(t.track))
+                }
+            }
+
+            HStack {
+                Eyebrow(text: "Interruptor Ollama \(Bundle.main.shortVersion)", theme: t)
+                Spacer()
+                Button(tr("Ver el log de Ollama")) { prefs.openLog?() }
+                    .buttonStyle(.plain)
+                    .font(Brand.sans(11, .medium))
+                    .foregroundStyle(t.accent)
+                    .disabled(ollama.backend.logURL == nil)
+            }
+            .padding(.horizontal, 2)
+        }
+    }
+
+    private func settingRow(title: String, detail: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(Brand.sans(12, .semibold))
+                Text(detail)
+                    .font(Brand.sans(10.5))
+                    .foregroundStyle(t.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            BrandSwitch(isOn: isOn, theme: t, action: action)
+        }
+    }
+}
+
+// MARK: - piezas pequeñas
 
 struct StatePill: View {
     let power: Power
@@ -372,12 +594,12 @@ struct StatePill: View {
             }
         }()
         HStack(spacing: 5) {
-            Rectangle().fill(fg).frame(width: 6, height: 6)
-            Text(text).font(Brand.mono(10, .bold))
+            Circle().fill(fg).frame(width: 6, height: 6)
+            Text(text).font(Brand.sans(10.5, .semibold))
         }
         .foregroundStyle(fg)
-        .padding(.horizontal, 8).padding(.vertical, 4)
-        .background(Rectangle().fill(bg))
+        .padding(.horizontal, 8).padding(.vertical, 3)
+        .background(Capsule().fill(bg))
     }
 }
 
@@ -386,9 +608,9 @@ struct Chip: View {
     let theme: Theme
     var body: some View {
         Text(text)
-            .font(Brand.mono(9))
-            .padding(.horizontal, 5).padding(.vertical, 1)
-            .background(Rectangle().fill(theme.track))
+            .font(Brand.sans(9.5, .medium))
+            .padding(.horizontal, 6).padding(.vertical, 1)
+            .background(Capsule().fill(theme.track))
     }
 }
 
@@ -398,7 +620,8 @@ struct Banner: View {
     let dismiss: () -> Void
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Rectangle().fill(theme.warm).frame(width: 2)
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(theme.warm)
             Text(text)
                 .font(Brand.sans(11))
                 .fixedSize(horizontal: false, vertical: true)
@@ -409,7 +632,7 @@ struct Banner: View {
                 .foregroundStyle(theme.muted)
         }
         .padding(10)
-        .background(Rectangle().fill(theme.warmSoft))
+        .background(RoundedRectangle(cornerRadius: 10).fill(theme.warmSoft))
     }
 }
 
@@ -420,20 +643,20 @@ struct LoginOffer: View {
     var body: some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 1) {
-                Text("¿Abrir al iniciar sesión?")
+                Text(tr("¿Abrir al iniciar sesión?"))
                     .font(Brand.sans(11.5, .semibold))
-                Text("Siempre a mano en la barra.")
+                Text(tr("Siempre a mano en la barra."))
                     .font(Brand.sans(10.5))
                     .foregroundStyle(theme.secondary)
             }
             Spacer()
-            Button("No", action: decline)
+            Button(tr("No"), action: decline)
                 .buttonStyle(.bordered).controlSize(.small)
-            Button("Sí", action: accept)
+            Button(tr("Sí"), action: accept)
                 .buttonStyle(.borderedProminent).controlSize(.small)
                 .tint(theme.accent)
         }
         .padding(10)
-        .background(Rectangle().fill(theme.accentSoft))
+        .background(RoundedRectangle(cornerRadius: 10).fill(theme.accentSoft))
     }
 }

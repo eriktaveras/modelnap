@@ -1,0 +1,89 @@
+/* Interruptor Ollama — English. Keys are the Spanish base text. */
+
+/* Panel */
+"Encendido" = "On";
+"Apagado" = "Off";
+"Arrancando…" = "Starting…";
+"Apagando…" = "Stopping…";
+"Sin Ollama" = "No Ollama";
+"%@ en memoria" = "%@ in memory";
+"Sin modelo en memoria. Se carga con el primer mensaje." = "No model in memory. It loads with the first message.";
+"Esperando a la API en %@" = "Waiting for the API at %@";
+"Liberando la memoria del modelo" = "Freeing the model's memory";
+"Las apps que usan Ollama no responden mientras esté apagado." = "Apps that use Ollama won't respond while it's off.";
+"No lo encuentro en este Mac. Pulsa para descargarlo de ollama.com." = "Not found on this Mac. Click to download it from ollama.com.";
+"Apagar Ollama" = "Turn Ollama off";
+"Encender Ollama" = "Turn Ollama on";
+"Descargar Ollama" = "Download Ollama";
+"No afiliado a Ollama" = "Not affiliated with Ollama";
+"Ajustes" = "Settings";
+"Cerrar ajustes" = "Close settings";
+
+/* Memoria */
+"Memoria del Mac" = "Mac memory";
+"presión normal" = "normal pressure";
+"presión alta" = "high pressure";
+"presión crítica" = "critical pressure";
+"Modelo" = "Model";
+"Resto" = "Other";
+"Liberar" = "Free";
+"Saca el modelo de la memoria sin apagar Ollama" = "Unloads the model without turning Ollama off";
+"Liberado solo a las %@ tras %d min sin uso" = "Freed automatically at %1$@ after %2$d min idle";
+"Ningún modelo en memoria" = "No model in memory";
+"Ollama apagado · 0 GB en uso" = "Ollama off · 0 GB in use";
+"sin uso %d min" = "idle %d min";
+"se libera en %d min" = "frees in %d min";
+"se libera en <1 min" = "frees in <1 min";
+"contexto %dK" = "%dK context";
+
+/* Modelos */
+"Modelos instalados" = "Installed models";
+"No hay modelos. Prueba `ollama pull llama3.2`." = "No models. Try `ollama pull llama3.2`.";
+"Enciende Ollama para ver los modelos" = "Turn Ollama on to see your models";
+"visión" = "vision";
+"herramientas" = "tools";
+"EN USO" = "LOADED";
+"Cargar" = "Load";
+"Carga este modelo en memoria" = "Loads this model into memory";
+
+/* Ajustes */
+"Liberar memoria sin uso" = "Free memory when idle";
+"Nunca" = "Never";
+"Si el modelo no genera nada en ese tiempo, se saca de la memoria. Ollama sigue encendido y lo vuelve a cargar con el siguiente mensaje." = "If the model doesn't generate anything for that long, it's unloaded. Ollama stays on and loads it again with the next message.";
+"Atajo de teclado" = "Keyboard shortcut";
+"%@ enciende o apaga Ollama desde cualquier app" = "%@ turns Ollama on or off from any app";
+"Abrir al iniciar sesión" = "Open at login";
+"El interruptor siempre a mano en la barra" = "The switch always ready in the menu bar";
+"Ver el log de Ollama" = "View Ollama log";
+"Otra app ya usa %@. Desactiva el atajo en Ajustes o libéralo en esa app." = "Another app already uses %@. Turn the shortcut off in Settings or free it in that app.";
+
+/* Inicio de sesión */
+"¿Abrir al iniciar sesión?" = "Open at login?";
+"Siempre a mano en la barra." = "Always ready in the menu bar.";
+"No" = "No";
+"Sí" = "Yes";
+"Inicio de sesión: %@" = "Login item: %@";
+
+/* Barra de menús */
+"Ollama encendido" = "Ollama on";
+"Ollama apagado" = "Ollama off";
+"Ollama no está instalado" = "Ollama is not installed";
+"Ollama arrancando…" = "Ollama starting…";
+"Ollama apagándose…" = "Ollama stopping…";
+"Descargar Ollama…" = "Download Ollama…";
+"Acerca de Interruptor Ollama" = "About Interruptor Ollama";
+"Salir" = "Quit";
+"Hecho por Taveras Solutions LLC\ntaverassolutions.com\n\nProyecto independiente, no afiliado a Ollama." = "Made by Taveras Solutions LLC\ntaverassolutions.com\n\nIndependent project, not affiliated with Ollama.";
+
+/* Estado y errores */
+"no instalado" = "not installed";
+"Ollama no está instalado." = "Ollama is not installed.";
+"No puedo escribir el log" = "Can't write the log";
+"Ollama respondió %d" = "Ollama responded %d";
+"Ollama no respondió en 90 s. Revisa el log (clic derecho en el ícono)." = "Ollama didn't respond within 90 s. Check the log (right-click the icon).";
+"Ollama sigue respondiendo. Puede que lo haya arrancado otro programa." = "Ollama is still responding. Another program may have started it.";
+
+/* Idioma */
+"Idioma" = "Language";
+"La app se reinicia al cambiarlo" = "The app restarts when you change it";
+"Auto" = "Auto";
