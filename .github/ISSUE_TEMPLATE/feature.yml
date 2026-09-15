@@ -1,14 +1,17 @@
-name: ✨ Idea
-description: Propón una mejora
+name: ✨ Feature idea
+description: Suggest an improvement · Propón una mejora
 labels: [idea]
 body:
-  - type: textarea
-    id: problema
+  - type: markdown
     attributes:
-      label: Qué problema resolvería
+      value: "Ideas in English or Spanish are welcome. · Puedes escribir en inglés o en español."
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
     validations:
       required: true
   - type: textarea
-    id: propuesta
+    id: proposal
     attributes:
-      label: Cómo lo imaginas
+      label: How do you imagine it?

@@ -1,39 +1,42 @@
-# Contribuir a ModelNap
+# Contributing to ModelNap
 
-¡Gracias por querer ayudar! ModelNap es un proyecto pequeño que mantiene una sola persona, así que las
-contribuciones se revisan cuando hay tiempo. *English speakers: issues and PRs in English are welcome too.*
+Thanks for wanting to help! ModelNap is a small project maintained by one person, so contributions are reviewed
+as time allows.
 
-## Dónde ayuda más ahora mismo
+> 🇪🇸 **¿Hablas español?** Puedes abrir issues y PRs en español sin problema. Lee también el
+> [README en español](README.es.md).
 
-- **Probar con Ollama.app** (la app oficial de ollama.com). Es el caso más común y todavía no está verificado.
-  Si lo usas, abre un issue con la plantilla de fallo contando si encender y apagar funciona.
-- **Macs Intel** y versiones de macOS entre la 14 y la 26.
-- **Traducciones**: copia `Resources/en.lproj` a `Resources/<idioma>.lproj` y traduce los valores (no las claves).
-- **Otros motores** (LM Studio, MLX, llama.cpp): abre primero un issue para acordar el enfoque.
+## Where help matters most right now
 
-## Antes de abrir un PR
+- **Testing with Ollama.app** (the official app from ollama.com). It's the most common setup and still unverified.
+  If you use it, open an issue with the bug template and tell us whether turning Ollama on and off works.
+- **Intel Macs** and macOS versions between 14 and 26.
+- **Translations**: copy `Resources/en.lproj` to `Resources/<language>.lproj` and translate the values (not the keys).
+- **Other engines** (LM Studio, MLX, llama.cpp): open an issue first so we can agree on the approach.
 
-1. Abre un issue si el cambio no es pequeño, para no trabajar en algo que no encaje.
-2. Compila y pasa las pruebas:
+## Before opening a PR
+
+1. Open an issue first if the change isn't small, so you don't work on something that won't fit.
+2. Build and run the tests:
    ```bash
    ./build.sh --test
    ./build.sh
    ```
-3. Si tocas la interfaz, adjunta capturas en claro y oscuro:
+3. If you touch the UI, attach light and dark screenshots:
    ```bash
    B="build/ModelNap.app/Contents/MacOS/ModelNap"
    "$B" --snapshot panel.png light demo
    "$B" --snapshot panel-dark.png dark demo
    ```
-4. Si añades o cambias textos, usa `tr("…")` con la frase en español como clave y añade la traducción en
-   `Resources/en.lproj/Localizable.strings`.
-5. Añade tu cambio a la sección «Sin publicar» de `CHANGELOG.md`.
+4. If you add or change user-facing text, use `tr("…")` with the Spanish sentence as the key and add the English
+   translation to `Resources/en.lproj/Localizable.strings`.
+5. Add your change to the "Unreleased" section of `CHANGELOG.md`.
 
-## Estilo
+## Style
 
-- Swift sin dependencias externas; AppKit + SwiftUI compilados con `swiftc` (sin proyecto de Xcode).
-- Comentarios y textos en español, como el resto del código.
-- Nada de telemetría ni conexiones fuera de la API local de Ollama.
-- El logo y el nombre están reservados (ver [TRADEMARKS.md](TRADEMARKS.md)); no hace falta tocarlos en un PR.
+- Swift with no external dependencies; AppKit + SwiftUI built with `swiftc` (no Xcode project).
+- Code comments are in Spanish, like the rest of the codebase. Comments in English are fine in your PR.
+- No telemetry and no connections other than Ollama's local API.
+- The name and logo are reserved (see [TRADEMARKS.md](TRADEMARKS.md)); PRs don't need to touch them.
 
-Al contribuir aceptas que tu código se publique bajo la [licencia MIT](LICENSE).
+By contributing, you agree that your code is released under the [MIT License](LICENSE).

@@ -1,9 +1,9 @@
-## Qué cambia
+## What changes
 
-## Cómo lo probaste
+## How you tested it
 
-- [ ] `./build.sh --test` pasa
-- [ ] `./build.sh` compila
-- [ ] Capturas en claro y oscuro (si toca la interfaz)
-- [ ] Textos nuevos traducidos en `Resources/en.lproj`
-- [ ] Entrada en «Sin publicar» de `CHANGELOG.md`
+- [ ] `./build.sh --test` passes
+- [ ] `./build.sh` builds
+- [ ] Light and dark screenshots (if it touches the UI)
+- [ ] New user-facing text translated in `Resources/en.lproj`
+- [ ] Entry under "Unreleased" in `CHANGELOG.md`

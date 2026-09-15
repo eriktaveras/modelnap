@@ -18,6 +18,7 @@ done
 "$BIN" --snapshot "$SHOTS/panel-en-light.png" light demo -AppleLanguages "(en)" >/dev/null
 "$BIN" --snapshot "$SHOTS/panel-en-dark.png" dark demo -AppleLanguages "(en)" >/dev/null
 "$BIN" --snapshot "$SHOTS/settings-en-light.png" light settings demo -AppleLanguages "(en)" >/dev/null
+"$BIN" --snapshot "$SHOTS/settings-en-dark.png" dark settings demo -AppleLanguages "(en)" >/dev/null
 
 echo "==> fondo del instalador"
 swiftc -O -swift-version 5 -framework AppKit Sources/Logo.swift Tools/dmgbackground/main.swift -o build/dmgbackground

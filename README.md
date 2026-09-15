@@ -1,190 +1,188 @@
 <div align="center">
 
-<img src="docs/images/icon.png" width="112" alt="Ícono de ModelNap">
+<img src="docs/images/icon.png" width="112" alt="ModelNap icon">
 
 # ModelNap
 
-**Deja dormir a tus modelos locales y recupera la memoria del Mac.**<br>
-<sub>Let idle local LLMs sleep. Get your Mac's memory back.</sub>
+**Let idle local LLMs sleep. Get your Mac's memory back.**
 
-[![Versión](https://img.shields.io/badge/versión-1.2.1-047857?style=flat-square)](https://github.com/eriktaveras/modelnap/releases/latest)
+**English** · [Español](README.es.md)
+
+[![Version](https://img.shields.io/badge/version-1.2.1-047857?style=flat-square)](https://github.com/eriktaveras/modelnap/releases/latest)
 ![macOS](https://img.shields.io/badge/macOS-14%2B-111?style=flat-square&logo=apple&logoColor=white)
-![Arquitectura](https://img.shields.io/badge/Apple%20Silicon%20%7C%20Intel-universal-111?style=flat-square)
+![Architecture](https://img.shields.io/badge/Apple%20Silicon%20%7C%20Intel-universal-111?style=flat-square)
 ![Swift](https://img.shields.io/badge/Swift-AppKit%20%2B%20SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white)
-![Notarizada](https://img.shields.io/badge/Apple-firmada%20y%20notarizada-34D399?style=flat-square&logo=apple&logoColor=white)
-![Idiomas](https://img.shields.io/badge/idiomas-ES%20%7C%20EN-5C6B64?style=flat-square)
-[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-047857?style=flat-square)](LICENSE)
-[![Compilación](https://img.shields.io/github/actions/workflow/status/eriktaveras/modelnap/build.yml?branch=main&style=flat-square&label=build)](https://github.com/eriktaveras/modelnap/actions/workflows/build.yml)
+![Notarized](https://img.shields.io/badge/Apple-signed%20%26%20notarized-34D399?style=flat-square&logo=apple&logoColor=white)
+![Languages](https://img.shields.io/badge/languages-EN%20%7C%20ES-5C6B64?style=flat-square)
+[![MIT License](https://img.shields.io/badge/license-MIT-047857?style=flat-square)](LICENSE)
+[![Build](https://img.shields.io/github/actions/workflow/status/eriktaveras/modelnap/build.yml?branch=main&style=flat-square&label=build)](https://github.com/eriktaveras/modelnap/actions/workflows/build.yml)
 
-[Web](https://modelnap.com) ·
-[Descargar](https://github.com/eriktaveras/modelnap/releases/latest) ·
-[Funciones](#-funciones) ·
-[Instalación](#-instalación) ·
-[Cómo funciona](#-cómo-funciona) ·
-[Desarrollo](#%EF%B8%8F-desarrollo) ·
-[Contribuir](#-contribuir)
+[Website](https://modelnap.com) ·
+[Download](https://github.com/eriktaveras/modelnap/releases/latest) ·
+[Features](#-features) ·
+[Install](#-install) ·
+[How it works](#%EF%B8%8F-how-it-works) ·
+[Development](#%EF%B8%8F-development) ·
+[Contributing](#-contributing)
 
 <br>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-  <img src="docs/images/hero-light.png" width="820" alt="Panel de ModelNap abierto desde la barra de menús, con el modelo cargado, la memoria del Mac y los ajustes">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-en-dark.png">
+  <img src="docs/images/hero-en-light.png" width="820" alt="ModelNap panel open from the menu bar, showing the loaded model, the Mac's memory and the settings">
 </picture>
 
 </div>
 
 <br>
 
-## ¿Por qué?
+## Why?
 
-Un modelo local de 20–30 GB se queda en la RAM aunque no lo estés usando. Apagar Ollama tampoco es obvio:
-depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vuelve a arrancar solo.
-**ModelNap** deja dormir al modelo cuando no lo usas y te devuelve el control de Ollama con un clic, sin abrir la Terminal.
+A 20–30 GB local model stays in RAM even when you're not using it. Turning Ollama off isn't obvious either:
+it depends on how it was installed, and if you do it the wrong way, macOS starts it again on its own.
+**ModelNap** lets the model sleep when you don't need it and gives you one-click control over Ollama, no Terminal required.
 
-## ✨ Funciones
+## ✨ Features
 
-| | Función | Detalle |
+| | Feature | Details |
 |:-:|---|---|
-| ⏻ | **Encender y apagar** | Un botón en el panel, o **⌥⌘O** desde cualquier app. |
-| 🔍 | **Detecta tu instalación** | Ollama.app, `brew services`, un LaunchAgent propio u `ollama serve` a mano. Lo apaga por el mismo camino por el que arranca. |
-| 🧹 | **Libera la memoria sin uso** | Tras 5, 15, 30 o 60 minutos sin generar, descarga el modelo. Ollama sigue encendido y lo recarga con el siguiente mensaje. |
-| 📊 | **Memoria del Mac** | RAM usada (mismo cálculo que el Monitor de Actividad), qué parte ocupa el modelo y la presión de memoria del sistema. |
-| 🗂️ | **Modelos instalados** | Tamaño, cuantización y etiquetas de *visión* y *herramientas*. Carga o libera cualquiera con un clic. |
-| 🟢 | **Estado de un vistazo** | El logo en la barra de menús, con un punto verde, ámbar o sin punto. |
-| 🌍 | **Español e inglés** | Sigue el idioma del sistema o elígelo en Ajustes. |
-| 🌗 | **Claro y oscuro** | Se adapta a la apariencia de macOS. |
-| 🔒 | **Privada** | Solo habla con Ollama en tu Mac. Sin cuentas, sin telemetría, sin analítica. |
-| 🧾 | **Open source** | Código abierto bajo licencia MIT: puedes revisar exactamente qué hace. |
+| ⏻ | **Turn on and off** | A button in the panel, or **⌥⌘O** from any app. |
+| 🔍 | **Detects your install** | Ollama.app, `brew services`, your own LaunchAgent or a manual `ollama serve`. It stops Ollama the same way it starts. |
+| 🧹 | **Frees idle memory** | After 5, 15, 30 or 60 minutes without generating, it unloads the model. Ollama stays on and reloads it with the next message. |
+| 📊 | **Mac memory** | RAM in use (same calculation as Activity Monitor), how much of it is the model, and the system's memory pressure. |
+| 🗂️ | **Installed models** | Size, quantization and *vision* / *tools* tags. Load or free any of them in one click. |
+| 🟢 | **Status at a glance** | The logo in the menu bar, with a green, amber or no dot. |
+| 🌍 | **English and Spanish** | Follows the system language, or pick one in Settings. |
+| 🌗 | **Light and dark** | Matches your macOS appearance. |
+| 🔒 | **Private** | Only talks to Ollama on your Mac. No accounts, no telemetry, no analytics. |
+| 🧾 | **Open source** | MIT licensed: you can check exactly what it does. |
 
-## 📥 Instalación
+## 📥 Install
 
-1. Descarga **`ModelNap-1.2.1.dmg`** desde [Releases](https://github.com/eriktaveras/modelnap/releases/latest).
-2. Ábrelo y arrastra la app a **Aplicaciones**.
-3. Ábrela: aparece en la **barra de menús, arriba a la derecha**.
+1. Download **`ModelNap-1.2.1.dmg`** from [Releases](https://github.com/eriktaveras/modelnap/releases/latest).
+2. Open it and drag the app to **Applications**.
+3. Launch it: it shows up in the **menu bar, top right**.
 
 <p align="center">
-  <img src="docs/images/installer.png" width="560" alt="Ventana del instalador: arrastrar ModelNap a Aplicaciones">
+  <img src="docs/images/installer.png" width="560" alt="Installer window: drag ModelNap to Applications">
 </p>
 
 > [!NOTE]
-> La app y el instalador van **firmados con Developer ID y notarizados por Apple**: abren sin avisos de Gatekeeper.
-> Para verificar la descarga: `shasum -a 256 -c ModelNap-1.2.1.dmg.sha256`
+> The app and the installer are **signed with a Developer ID and notarized by Apple**, so they open without Gatekeeper warnings.
+> To verify the download: `shasum -a 256 -c ModelNap-1.2.1.dmg.sha256`
 
-**Requisitos:** macOS 14 Sonoma o superior · Apple Silicon o Intel · [Ollama](https://ollama.com/download) instalado.
+**Requirements:** macOS 14 Sonoma or later · Apple Silicon or Intel · [Ollama](https://ollama.com/download) installed.
 
-## 🧭 Uso
+## 🧭 Usage
 
-### En la barra de menús
+### In the menu bar
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/menubar-dark.png">
-  <img src="docs/images/menubar-light.png" width="520" alt="Estados del ícono: encendido, arrancando o apagando, apagado">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/menubar-en-dark.png">
+  <img src="docs/images/menubar-en-light.png" width="520" alt="Icon states: on, starting or stopping, off">
 </picture>
 
-| Acción | Resultado |
+| Action | Result |
 |---|---|
-| **Clic** en el ícono | Abre el panel |
-| **Clic derecho** | Encender/apagar, ver el log de Ollama, abrir al iniciar sesión, *Acerca de*, salir |
-| **⌥⌘O** | Enciende o apaga Ollama desde cualquier app |
+| **Click** the icon | Opens the panel |
+| **Right-click** | Turn on/off, view the Ollama log, open at login, *About*, quit |
+| **⌥⌘O** | Turns Ollama on or off from any app |
 
-### Ajustes
+### Settings
 
-Desde el engranaje del panel:
+From the gear in the panel:
 
-- **Liberar memoria sin uso** — nunca, 5, 15, 30 o 60 min.
-- **Atajo de teclado** — activa o desactiva ⌥⌘O.
-- **Abrir al iniciar sesión** — la app pregunta la primera vez, no se añade sola.
-- **Idioma** — automático, español o inglés.
+- **Free memory when idle** — never, 5, 15, 30 or 60 min.
+- **Keyboard shortcut** — turn ⌥⌘O on or off.
+- **Open at login** — the app asks the first time and never adds itself.
+- **Language** — automatic, English or Spanish.
 
-## ⚙️ Cómo funciona
+## ⚙️ How it works
 
-### Apagar Ollama por el camino correcto
+### Stopping Ollama the right way
 
-Matar el proceso no siempre sirve: un LaunchAgent con `KeepAlive` lo relanza al instante. La app detecta el
-mecanismo y usa el suyo.
+Killing the process doesn't always work: a LaunchAgent with `KeepAlive` brings it right back. ModelNap detects the
+mechanism and uses its own.
 
-| Si Ollama viene de… | Apagar | Encender | Verificado |
+| If Ollama comes from… | Stop | Start | Verified |
 |---|---|---|:-:|
-| **Ollama.app** (ollama.com) | Cierra la app | Abre la app | ⏳ pendiente |
-| **`brew services`** o LaunchAgent propio | `launchctl bootout` | `launchctl bootstrap` | ✅ |
-| **`ollama serve`** a mano | `SIGTERM` al servidor | Lanza `ollama serve` | ✅ |
-| **No instalado** | — | Lleva a ollama.com/download | ✅ |
+| **Ollama.app** (ollama.com) | Quits the app | Opens the app | ⏳ pending |
+| **`brew services`** or your own LaunchAgent | `launchctl bootout` | `launchctl bootstrap` | ✅ |
+| **Manual `ollama serve`** | `SIGTERM` to the server | Launches `ollama serve` | ✅ |
+| **Not installed** | — | Opens ollama.com/download | ✅ |
 
-Detección, por orden: Ollama.app en marcha → LaunchAgent cargado → `ollama serve` suelto → lo que haya
-instalado. Si Ollama está apagado, recuerda el último mecanismo con el que estuvo encendido.
+Detection order: running Ollama.app → loaded LaunchAgent → standalone `ollama serve` → whatever is installed.
+While Ollama is off, it remembers the last mechanism it was running with.
 
-### Detectar un modelo «sin uso»
+### Detecting an idle model
 
-Ollama no expone la hora de la última petición. Cada modelo cargado corre en un proceso `ollama runner` que
-solo gasta CPU mientras trabaja:
+Ollama doesn't expose when the last request happened. Each loaded model runs in an `ollama runner` process that
+only uses CPU while it's working:
 
-| Medición (gemma4 26B, Apple M5 Pro) | CPU del runner |
+| Measurement (gemma4 26B, Apple M5 Pro) | Runner CPU time |
 |---|---:|
-| 30 s en reposo | +0,06 s |
-| Generar 104 tokens | +0,99 s |
+| 30 s idle | +0.06 s |
+| Generating 104 tokens | +0.99 s |
 
-Cada 2,5 s la app suma la CPU de los runners (`proc_pid_rusage`). Si sube más de **0,08 s**, o cambia el modelo
-cargado, cuenta como uso. La lógica vive en [`IdleTracker`](Sources/Activity.swift) y está cubierta por pruebas.
+Every 2.5 s the app adds up the runners' CPU time (`proc_pid_rusage`). If it grows by more than **0.08 s**, or the
+loaded model changes, that counts as activity. The logic lives in [`IdleTracker`](Sources/Activity.swift) and is covered by tests.
 
-### Por qué no está en la Mac App Store
+### Why it isn't on the Mac App Store
 
-La App Store exige **App Sandbox**. Con el sandbox activo, lo medimos: `launchctl` devuelve *Bad request*,
-enviar señales a otros procesos da `EPERM` y cerrar otra app se rechaza. Leer el estado por la API sí
-funciona, pero apagar Ollama no. Por eso se distribuye firmada y notarizada fuera de la tienda.
+The App Store requires **App Sandbox**. We measured it with the sandbox on: `launchctl` returns *Bad request*,
+signals to other processes fail with `EPERM`, and quitting another app is refused. Reading Ollama's state through
+the API works, but stopping it doesn't. That's why ModelNap ships signed and notarized outside the store.
 
-## 🌍 Idiomas
+## 🌍 Languages
 
-La interfaz está en **español** (idioma base) e **inglés**. Por defecto sigue el idioma de macOS; se puede
-fijar en **Ajustes › Idioma**.
+The interface is available in **English** and **Spanish** (the base language). It follows your macOS language by
+default, or you can set it in **Settings › Language**.
 
 <p align="center">
-  <img src="docs/images/panel-en.png" width="270" alt="Panel en inglés, modo claro">
-  <img src="docs/images/panel-en-dark.png" width="270" alt="Panel en inglés, modo oscuro">
-  <img src="docs/images/settings-en.png" width="270" alt="Ajustes en inglés">
+  <img src="docs/images/panel-es.png" width="270" alt="Panel in Spanish">
 </p>
 
-Las traducciones viven en `Resources/<idioma>.lproj/Localizable.strings`. La clave de cada frase es el propio
-texto en español, así el código se lee igual que la interfaz. Para añadir un idioma basta con crear otra
-carpeta `.lproj` con las mismas claves.
+Translations live in `Resources/<language>.lproj/Localizable.strings`. Each key is the Spanish text itself, so the
+code reads like the interface. To add a language, create another `.lproj` folder with the same keys.
 
-## 🎨 Marca
+## 🎨 Brand
 
-<img align="left" src="docs/logo/modelnap-mark-forest-512.png" width="84" alt="Logo de ModelNap">
+<img align="left" src="docs/logo/modelnap-mark-forest-512.png" width="84" alt="ModelNap logo">
 
-El logo es un **modelo echando la siesta**: un marco redondeado con el ojo cerrado y una «z» que se escapa por
-la esquina. Es un dibujo propio definido en [`Sources/Logo.swift`](Sources/Logo.swift), y de ahí salen el
-ícono de la app, el de la barra de menús, el instalador y los archivos para la web en
-[`docs/logo`](docs/logo): SVG en cuatro colores, PNG, `favicon.ico`, `favicon.svg` y `apple-touch-icon.png`.
+The logo is a **model taking a nap**: a rounded frame with a closed eye and a "z" escaping through the corner. It's
+an original drawing defined in [`Sources/Logo.swift`](Sources/Logo.swift), which generates the app icon, the
+menu bar icon, the installer and the web assets in [`docs/logo`](docs/logo): SVG in four colors, PNG,
+`favicon.ico`, `favicon.svg` and `apple-touch-icon.png`.
 
 <br clear="left">
 
-| Uso | Color |
+| Use | Color |
 |---|---|
-| Verde principal (fondos oscuros) | `#34D399` |
-| Verde bosque (fondos claros) | `#047857` |
-| «z» sobre el ícono | `#A7F3D0` |
-| Fondo del ícono | `#101318` |
+| Primary green (dark backgrounds) | `#34D399` |
+| Forest green (light backgrounds) | `#047857` |
+| "z" on the icon | `#A7F3D0` |
+| Icon background | `#101318` |
 
-## 🔒 Privacidad
+## 🔒 Privacy
 
-- Solo se conecta a la API local de Ollama (`127.0.0.1:11434`, o `OLLAMA_HOST` si está definido).
-- No hay cuentas, telemetría ni analítica, y no envía nada a internet. El código es abierto: puedes comprobarlo.
-- Las únicas páginas externas que abre son las que pulses: ollama.com/download, modelnap.com y taverassolutions.com.
+- It only connects to Ollama's local API (`127.0.0.1:11434`, or `OLLAMA_HOST` if set).
+- No accounts, telemetry or analytics, and nothing is sent to the internet. The code is open, so you can check.
+- The only external pages it opens are the ones you click: ollama.com/download, modelnap.com and taverassolutions.com.
 
-## 🛠️ Desarrollo
+## 🛠️ Development
 
-App nativa (AppKit + SwiftUI) **sin proyecto de Xcode**: se compila con `swiftc` directamente.
+A native app (AppKit + SwiftUI) **without an Xcode project**: it builds straight with `swiftc`.
 
-**Requisitos:** Xcode 26 con Swift 6.3 (es con lo que se compila; versiones anteriores sin probar) · [uv](https://docs.astral.sh/uv/) para empaquetar el `.dmg`.
+**Requirements:** Xcode 26 with Swift 6.3 (what it's built with; older versions untested) · [uv](https://docs.astral.sh/uv/) to package the `.dmg`.
 
 ```bash
-./build.sh              # app en ./build (binario universal, firma ad-hoc)
-./build.sh --install    # además la copia a ~/Applications y la relanza
-./build.sh --test       # pruebas de IdleTracker
-./docs/generate-images.sh   # regenera las imágenes de este README y el logo
+./build.sh                  # app in ./build (universal binary, ad-hoc signed)
+./build.sh --install        # also copies it to ~/Applications and relaunches it
+./build.sh --test           # IdleTracker tests
+./docs/generate-images.sh   # regenerates this README's images and the logo
 ```
 
-### Publicar una versión
+### Releasing a version
 
 ```bash
 echo 1.3.0 > VERSION
@@ -192,109 +190,109 @@ DEVELOPER_ID="Developer ID Application: Erik Manuel Taveras Tavarez (794R79NU32)
 NOTARY_PROFILE=taveras-notary ./package.sh
 ```
 
-`package.sh` firma con runtime endurecido, **notariza y grapa** la app y el `.dmg`, y deja
-`dist/ModelNap-<versión>.dmg` con su `.sha256`. Las credenciales de notarización viven en el
-llavero (`xcrun notarytool store-credentials`). Sin esas variables sale una build ad-hoc solo para pruebas.
+`package.sh` signs with the hardened runtime, **notarizes and staples** both the app and the `.dmg`, and leaves
+`dist/ModelNap-<version>.dmg` with its `.sha256`. Notarization credentials live in the keychain
+(`xcrun notarytool store-credentials`). Without those variables you get an ad-hoc build for local testing only.
 
-### Herramientas de línea de comandos
+### Command-line tools
 
 ```bash
 B="/Applications/ModelNap.app/Contents/MacOS/ModelNap"
-"$B" --status                 # mecanismo detectado y si la API responde
-"$B" --on | --off             # mismo camino que el botón del panel
-"$B" --memory                 # memoria del Mac y CPU de los runners
-"$B" --idle-test 20           # prueba la liberación automática con 20 s de límite
+"$B" --status                 # detected mechanism and whether the API responds
+"$B" --on | --off             # same path as the panel button
+"$B" --memory                 # Mac memory and runner CPU time
+"$B" --idle-test 20           # tests auto-free with a 20 s limit
 "$B" --snapshot panel.png [light|dark] [settings] [demo] [-AppleLanguages "(en)"]
 ```
 
-### Estructura
+### Project layout
 
 ```text
 Sources/
-├── main.swift            Arranque, barra de menús, menú contextual y modos de terminal
-├── Ollama.swift          Detección del mecanismo, encendido/apagado, API de Ollama y estado
-├── Activity.swift        CPU de los runners e IdleTracker («sin uso»)
-├── SystemMemory.swift    Memoria usada y presión del sistema
-├── HotKey.swift          Atajo global ⌥⌘O (Carbon, sin permiso de Accesibilidad)
-├── ContentView.swift     Panel, memoria, modelos y ajustes
-├── Theme.swift           Colores y tipografía
-├── Logo.swift            Geometría del logo (ícono, barra de menús, dmg y web)
-├── Mark.swift            Ícono de la barra, cabecera e ícono de la app
-└── L10n.swift            Traducciones y selector de idioma
-Resources/                es.lproj y en.lproj
-Tests/                    Pruebas de IdleTracker
-Tools/                    Ícono, logo, fondo del dmg e imágenes del README
-docs/logo/                Logo para la web (SVG, PNG, favicon)
-packaging/                Ajustes de dmgbuild
+├── main.swift            Startup, menu bar, context menu and command-line modes
+├── Ollama.swift          Mechanism detection, on/off, Ollama API and state
+├── Activity.swift        Runner CPU time and IdleTracker (idle detection)
+├── SystemMemory.swift    Memory in use and system pressure
+├── HotKey.swift          Global ⌥⌘O shortcut (Carbon, no Accessibility permission)
+├── ContentView.swift     Panel, memory, models and settings
+├── Theme.swift           Colors and typography
+├── Logo.swift            Logo geometry (icon, menu bar, dmg and web)
+├── Mark.swift            Menu bar icon, header and app icon
+└── L10n.swift            Translations and language picker
+Resources/                es.lproj and en.lproj
+Tests/                    IdleTracker tests
+Tools/                    Icon, logo, dmg background and README images
+docs/logo/                Web logo assets (SVG, PNG, favicon)
+packaging/                dmgbuild settings
 ```
 
-## 🗺️ Hoja de ruta
+## 🗺️ Roadmap
 
-- [ ] Actualizaciones automáticas con [Sparkle](https://sparkle-project.org)
-- [ ] Probar la detección con Ollama.app
-- [ ] Atajos de Apple y Siri («Apagar Ollama»)
-- [ ] Descargar y borrar modelos desde el panel
-- [ ] Enlaces `modelnap://on|off` para Raycast y Alfred
-- [ ] Web en [modelnap.com](https://modelnap.com) con descarga pública
-- [ ] Control en el Centro de Control (macOS 26)
+- [ ] Automatic updates with [Sparkle](https://sparkle-project.org)
+- [ ] Verify detection with Ollama.app
+- [ ] Apple Shortcuts and Siri ("Turn off Ollama")
+- [ ] Download and delete models from the panel
+- [ ] `modelnap://on|off` links for Raycast and Alfred
+- [x] Website at [modelnap.com](https://modelnap.com) with public download
+- [ ] Control Center toggle (macOS 26)
 
-Historial de cambios en [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md) for the release history.
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-Las contribuciones son bienvenidas. Donde más ayuda ahora mismo:
+Contributions are welcome. Where help matters most right now:
 
-- 🧪 **Probar con Ollama.app** y en **Macs Intel**: abre un [issue](https://github.com/eriktaveras/modelnap/issues/new/choose) contando cómo te fue.
-- 🌍 **Traducciones**: copia `Resources/en.lproj` a tu idioma.
-- 🔌 **Otros motores** (LM Studio, MLX, llama.cpp): propón el enfoque en un issue antes de programar.
+- 🧪 **Testing with Ollama.app** and on **Intel Macs**: open an [issue](https://github.com/eriktaveras/modelnap/issues/new/choose) and tell us how it went.
+- 🌍 **Translations**: copy `Resources/en.lproj` to your language.
+- 🔌 **Other engines** (LM Studio, MLX, llama.cpp): propose the approach in an issue before writing code.
 
-Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir un PR. Los problemas de seguridad se reportan en privado
-(ver [SECURITY.md](SECURITY.md)).
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR. Report security issues privately
+(see [SECURITY.md](SECURITY.md)).
 
-## ❓ Preguntas frecuentes
+## ❓ FAQ
 
 <details>
-<summary><b>¿Es de Ollama?</b></summary>
+<summary><b>Is it made by Ollama?</b></summary>
 <br>
-No. Es un proyecto independiente de Taveras Solutions, sin afiliación con Ollama.
+No. It's an independent project by Taveras Solutions, not affiliated with Ollama.
 </details>
 
 <details>
-<summary><b>¿Qué pasa con mis apps que usan Ollama cuando está apagado?</b></summary>
+<summary><b>What happens to my apps that use Ollama while it's off?</b></summary>
 <br>
-No responden hasta que lo enciendas. Si solo quieres recuperar RAM, usa <i>Liberar</i> o la liberación automática: Ollama sigue encendido y recarga el modelo con el siguiente mensaje.
+They won't respond until you turn it back on. If you only want your RAM back, use <i>Free</i> or auto-free when idle: Ollama stays on and reloads the model with the next message.
 </details>
 
 <details>
-<summary><b>¿Vuelve a arrancar al reiniciar el Mac?</b></summary>
+<summary><b>Does Ollama start again when I restart my Mac?</b></summary>
 <br>
-Depende de tu instalación. Si Ollama arranca con el sistema (Ollama.app como ítem de inicio o <code>brew services</code>), volverá a hacerlo. La app no modifica esa configuración.
+It depends on your install. If Ollama starts with the system (Ollama.app as a login item, or <code>brew services</code>), it will start again. ModelNap doesn't change that configuration.
 </details>
 
 <details>
-<summary><b>El atajo ⌥⌘O no hace nada</b></summary>
+<summary><b>The ⌥⌘O shortcut does nothing</b></summary>
 <br>
-Puede que otra app use la misma combinación: macOS no avisa de esos conflictos entre apps. Desactívalo en Ajustes o cambia el atajo de la otra app.
+Another app may be using the same combination: macOS doesn't report conflicts between apps. Turn it off in Settings or change the other app's shortcut.
 </details>
 
 <details>
-<summary><b>¿Puedo hacer un fork?</b></summary>
+<summary><b>Can I fork it?</b></summary>
 <br>
-Sí, el código es MIT. Si distribuyes una versión modificada, ponle otro nombre, otro logo y otro identificador de app: el nombre «ModelNap» y su logo están reservados (ver <a href="TRADEMARKS.md">TRADEMARKS.md</a>).
+Yes, the code is MIT. If you distribute a modified build, give it a different name, logo and bundle identifier: the "ModelNap" name and logo are reserved (see <a href="TRADEMARKS.md">TRADEMARKS.md</a>).
 </details>
 
 <details>
-<summary><b>¿Hace más rápidos los modelos?</b></summary>
+<summary><b>Does it make models faster?</b></summary>
 <br>
-No. Libera memoria y te deja controlar cuándo está encendido Ollama; la velocidad depende del modelo y del Mac.
+No. It frees memory and lets you control when Ollama is running; speed depends on the model and your Mac.
 </details>
 
 ---
 
 <div align="center">
 <sub>
-<a href="https://modelnap.com"><b>modelnap.com</b></a> · Hecho por <a href="https://taverassolutions.com"><b>Taveras Solutions</b></a> ·
-Código bajo <a href="LICENSE">licencia MIT</a> · el nombre y el logo de ModelNap están reservados (<a href="TRADEMARKS.md">TRADEMARKS.md</a>).<br>
-Ollama es una marca de sus respectivos propietarios. Este proyecto no está afiliado a Ollama.
+<a href="https://modelnap.com"><b>modelnap.com</b></a> · Made by <a href="https://taverassolutions.com"><b>Taveras Solutions</b></a> ·
+Code under the <a href="LICENSE">MIT License</a> · the ModelNap name and logo are reserved (<a href="TRADEMARKS.md">TRADEMARKS.md</a>).<br>
+Ollama is a trademark of its respective owners. This project is not affiliated with Ollama.
 </sub>
 </div>

@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 🔒 Reportar un problema de seguridad
+  - name: 🔒 Report a security issue · Reportar un problema de seguridad
     url: https://github.com/eriktaveras/modelnap/security/advisories/new
-    about: De forma privada, no en un issue público.
+    about: Privately, not in a public issue. · En privado, no en un issue público.

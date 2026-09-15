@@ -124,11 +124,12 @@ func save(_ data: Data, _ name: String) {
     print("  \(name)")
 }
 
-// 1. Portada: barra de menús, panel principal y ajustes.
-for dark in [false, true] {
+// 1. Portada: barra de menús, panel principal y ajustes, en español (hero-*) y en inglés (hero-en-*).
+for (lang, dark) in [("es", false), ("es", true), ("en", false), ("en", true)] {
     let mode = dark ? "dark" : "light"
-    let panel = image("panel-\(mode).png")
-    let settings = image("settings-\(mode).png")
+    let suffix = lang == "es" ? "" : "-en"
+    let panel = image("panel\(suffix)-\(mode).png")
+    let settings = image("settings\(suffix)-\(mode).png")
     let W: CGFloat = 900, H: CGFloat = 590
     save(canvas(W, H, dark: dark) { ctx in
         let bg = CGRect(x: 0, y: 0, width: W, height: H)
@@ -136,13 +137,15 @@ for dark in [false, true] {
         menuBar(ctx, width: W, dark: dark, iconX: 599)
         drawPanel(settings, at: CGPoint(x: 150, y: 96), width: 300, dark: dark, in: ctx)
         drawPanel(panel, at: CGPoint(x: 440, y: 42), width: 340, dark: dark, in: ctx)
-    }, "hero-\(mode).png")
+    }, "hero\(suffix)-\(mode).png")
 }
 
-// 2. Estados del ícono en la barra de menús.
-for dark in [false, true] {
+// 2. Estados del ícono en la barra de menús, con etiquetas en español y en inglés.
+for (lang, dark) in [("es", false), ("es", true), ("en", false), ("en", true)] {
     let mode = dark ? "dark" : "light"
-    let states: [(Mark.Dot, Bool, String)] = [(.on, false, "Encendido"), (.busy, false, "Arrancando / apagando"), (.none, true, "Apagado")]
+    let suffix = lang == "es" ? "" : "-en"
+    let labels = lang == "es" ? ["Encendido", "Arrancando / apagando", "Apagado"] : ["On", "Starting / stopping", "Off"]
+    let states: [(Mark.Dot, Bool, String)] = [(.on, false, labels[0]), (.busy, false, labels[1]), (.none, true, labels[2])]
     let W: CGFloat = 640, H: CGFloat = 96
     save(canvas(W, H, dark: dark) { ctx in
         (dark ? hex(0x111A16) : hex(0xFFFFFF)).setFill()
@@ -159,7 +162,7 @@ for dark in [false, true] {
             let w = textWidth(s.2, size: 12, weight: .medium)
             text(s.2, size: 12, weight: .medium, color: dark ? hex(0x7D938A) : hex(0x5C6B64), at: CGPoint(x: cx - w / 2, y: 62))
         }
-    }, "menubar-\(mode).png")
+    }, "menubar\(suffix)-\(mode).png")
 }
 
 // 3. Ventana del instalador: fondo real del dmg con los íconos donde los pone Finder.
@@ -207,3 +210,4 @@ func single(_ shot: String, dark: Bool, _ name: String) {
 single("panel-en-light.png", dark: false, "panel-en.png")
 single("panel-en-dark.png", dark: true, "panel-en-dark.png")
 single("settings-en-light.png", dark: false, "settings-en.png")
+single("panel-light.png", dark: false, "panel-es.png")

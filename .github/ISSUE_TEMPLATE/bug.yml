@@ -1,43 +1,46 @@
-name: 🐞 Fallo
-description: Algo no funciona como debería
-labels: [fallo]
+name: 🐞 Bug report
+description: Something isn't working as expected · Algo no funciona como debería
+labels: [bug]
 body:
-  - type: textarea
-    id: que-pasa
+  - type: markdown
     attributes:
-      label: Qué pasa
-      description: Qué hiciste, qué esperabas y qué ocurrió.
+      value: "Issues in English or Spanish are welcome. · Puedes escribir en inglés o en español."
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: What you did, what you expected and what happened.
     validations:
       required: true
   - type: dropdown
-    id: instalacion
+    id: install
     attributes:
-      label: ¿Cómo arranca Ollama en tu Mac?
+      label: How does Ollama start on your Mac?
       options:
-        - Ollama.app (la app oficial)
+        - Ollama.app (the official app)
         - brew services
-        - LaunchAgent propio
-        - ollama serve a mano
-        - No lo sé
+        - Custom LaunchAgent
+        - Manual ollama serve
+        - I don't know
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: Versión de ModelNap
+      label: ModelNap version
       placeholder: "1.2.1"
     validations:
       required: true
   - type: input
     id: macos
     attributes:
-      label: macOS y chip
+      label: macOS and chip
       placeholder: "macOS 26.6, Apple M4 / Intel"
     validations:
       required: true
   - type: textarea
     id: status
     attributes:
-      label: Salida de --status
-      description: 'Ejecuta `/Applications/ModelNap.app/Contents/MacOS/ModelNap --status` y pega el resultado.'
+      label: Output of --status
+      description: 'Run `/Applications/ModelNap.app/Contents/MacOS/ModelNap --status` and paste the result.'
       render: text
