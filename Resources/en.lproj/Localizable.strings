@@ -1,4 +1,4 @@
-/* Interruptor Ollama — English. Keys are the Spanish base text. */
+/* ModelNap — English. Keys are the Spanish base text. */
 
 /* Panel */
 "Encendido" = "On";
@@ -53,7 +53,7 @@
 "Atajo de teclado" = "Keyboard shortcut";
 "%@ enciende o apaga Ollama desde cualquier app" = "%@ turns Ollama on or off from any app";
 "Abrir al iniciar sesión" = "Open at login";
-"El interruptor siempre a mano en la barra" = "The switch always ready in the menu bar";
+"Siempre a mano en la barra de menús" = "Always ready in the menu bar";
 "Ver el log de Ollama" = "View Ollama log";
 "No se pudo activar el atajo %@." = "Couldn't enable the %@ shortcut.";
 
@@ -71,9 +71,9 @@
 "Ollama arrancando…" = "Ollama starting…";
 "Ollama apagándose…" = "Ollama stopping…";
 "Descargar Ollama…" = "Download Ollama…";
-"Acerca de Interruptor Ollama" = "About Interruptor Ollama";
+"Acerca de ModelNap" = "About ModelNap";
 "Salir" = "Quit";
-"Hecho por Taveras Solutions LLC\ntaverassolutions.com\n\nProyecto independiente, no afiliado a Ollama." = "Made by Taveras Solutions LLC\ntaverassolutions.com\n\nIndependent project, not affiliated with Ollama.";
+"Deja dormir a tus modelos locales y recupera la memoria del Mac.\n\nmodelnap.com\nHecho por Taveras Solutions LLC\n\nProyecto independiente, no afiliado a Ollama." = "Let idle local LLMs sleep and get your Mac's memory back.\n\nmodelnap.com\nMade by Taveras Solutions LLC\n\nIndependent project, not affiliated with Ollama.";
 
 /* Estado y errores */
 "no instalado" = "not installed";

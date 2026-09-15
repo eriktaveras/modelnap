@@ -3,8 +3,8 @@ import SwiftUI
 import ServiceManagement
 
 // Uso por terminal, con el mismo camino que el interruptor del panel:
-//   InterruptorOllama --status | --on | --off
-//   InterruptorOllama --snapshot salida.png [dark|light] [settings] [demo]
+//   ModelNap --status | --on | --off
+//   ModelNap --snapshot salida.png [dark|light] [settings] [demo]
 if CommandLine.arguments.contains("--memory") {
     let m = SystemMemory.current()
     print("memoria usada \(m.used.memoryGB) de \(m.total.memoryGB) · presión \(m.pressure)")
@@ -15,7 +15,7 @@ if CommandLine.arguments.contains("--memory") {
 }
 
 // Prueba de la liberación automática con un límite en segundos:
-//   InterruptorOllama --idle-test 20
+//   ModelNap --idle-test 20
 if let i = CommandLine.arguments.firstIndex(of: "--idle-test"),
    let limit = CommandLine.arguments.dropFirst(i + 1).first.flatMap(TimeInterval.init) {
     MainActor.assumeIsolated {
@@ -290,7 +290,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         login.state = prefs.opensAtLogin ? .on : .off
 
         menu.addItem(.separator())
-        add(menu, tr("Acerca de Interruptor Ollama"), #selector(showAbout))
+        add(menu, tr("Acerca de ModelNap"), #selector(showAbout))
         add(menu, "Taveras Solutions", #selector(openBrand))
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: tr("Salir"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
@@ -329,10 +329,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showAbout() {
         let credits = NSMutableAttributedString(
-            string: tr("Hecho por Taveras Solutions LLC\ntaverassolutions.com\n\nProyecto independiente, no afiliado a Ollama."),
+            string: tr("Deja dormir a tus modelos locales y recupera la memoria del Mac.\n\nmodelnap.com\nHecho por Taveras Solutions LLC\n\nProyecto independiente, no afiliado a Ollama."),
             attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor])
-        let link = (credits.string as NSString).range(of: "taverassolutions.com")
-        credits.addAttribute(.link, value: Paths.brand, range: link)
+        let link = (credits.string as NSString).range(of: "modelnap.com")
+        credits.addAttribute(.link, value: Paths.web, range: link)
         let centered = NSMutableParagraphStyle()
         centered.alignment = .center
         credits.addAttribute(.paragraphStyle, value: centered, range: NSRange(location: 0, length: credits.length))

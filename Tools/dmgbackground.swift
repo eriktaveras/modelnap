@@ -59,9 +59,9 @@ func render(scale: CGFloat) -> Data {
         brain.draw(in: CGRect(x: 32, y: 34, width: brain.size.width, height: brain.size.height),
                    from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
     }
-    text("Interruptor Ollama", font(24, weight: .bold), ink, at: CGPoint(x: 66, y: 30))
-    text(tr("Enciende y apaga Ollama desde la barra de menús."), font(13), secondary, at: CGPoint(x: 67, y: 62))
-    text("Turn Ollama on and off from the menu bar.", font(11), muted, at: CGPoint(x: 67, y: 81))
+    text("ModelNap", font(24, weight: .bold), ink, at: CGPoint(x: 66, y: 30))
+    text(tr("Deja dormir a tus modelos locales y recupera la memoria del Mac."), font(13), secondary, at: CGPoint(x: 67, y: 62))
+    text("Let idle local LLMs sleep. Get your Mac's memory back.", font(11), muted, at: CGPoint(x: 67, y: 81))
 
     let v = "v\(version)"
     let vf = mono(11)
@@ -125,7 +125,7 @@ func render(scale: CGFloat) -> Data {
     green.setFill()
     NSBezierPath(ovalIn: CGRect(x: 32, y: 419, width: 6, height: 6)).fill()
     text("Taveras Solutions", font(10.5, weight: .semibold), secondary, at: CGPoint(x: 43, y: 414))
-    let legal = tr("Firmada y notarizada por Apple · No afiliado a Ollama")
+    let legal = tr("modelnap.com · Firmada y notarizada por Apple · No afiliado a Ollama")
     let lf = font(10)
     let lw = (legal as NSString).size(withAttributes: [.font: lf]).width
     text(legal, lf, muted, at: CGPoint(x: W - 32 - lw, y: 415))

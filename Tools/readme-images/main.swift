@@ -175,10 +175,10 @@ save(canvas(660, 468) { ctx in
         c.setFill()
         NSBezierPath(ovalIn: CGRect(x: 14 + CGFloat(i) * 20, y: 8, width: 12, height: 12)).fill()
     }
-    let title = "Interruptor Ollama"
+    let title = "ModelNap"
     text(title, size: 13, weight: .semibold, color: hex(0x3C3C3C), at: CGPoint(x: 330 - textWidth(title, size: 13, weight: .semibold) / 2, y: 5))
     dmg.draw(in: CGRect(x: 0, y: 28, width: 660, height: 440), from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
-    for (icon, center, label) in [(appIcon, CGPoint(x: 170, y: 228), "Interruptor Ollama"), (appsIcon, CGPoint(x: 490, y: 228), "Aplicaciones")] {
+    for (icon, center, label) in [(appIcon, CGPoint(x: 170, y: 228), "ModelNap"), (appsIcon, CGPoint(x: 490, y: 228), "Aplicaciones")] {
         icon.draw(in: CGRect(x: center.x - 52, y: center.y - 52, width: 104, height: 104), from: .zero,
                   operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
         text(label, size: 12, color: hex(0x1D1D1F), at: CGPoint(x: center.x - textWidth(label, size: 12) / 2, y: center.y + 58))

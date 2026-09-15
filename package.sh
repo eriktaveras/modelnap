@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Arma el instalador para compartir: dist/Interruptor-Ollama-<version>.dmg
+# Arma el instalador para compartir: dist/ModelNap-<version>.dmg
 # (ventana con fondo de marca, la app y un acceso a Aplicaciones para arrastrar).
 #
 # Notarización opcional, cuando haya cuenta de Apple Developer:
@@ -12,8 +12,8 @@ ROOT="$PWD"
 VERSION="$(cat VERSION)"
 BUILD="$ROOT/build"
 DIST="$ROOT/dist"
-APP="$BUILD/Interruptor Ollama.app"
-DMG="$DIST/Interruptor-Ollama-$VERSION.dmg"
+APP="$BUILD/ModelNap.app"
+DMG="$DIST/ModelNap-$VERSION.dmg"
 
 ./build.sh
 
@@ -41,7 +41,7 @@ uvx --quiet --from dmgbuild dmgbuild \
   -D app="$APP" \
   -D background="$BUILD/dmg-fondo.tiff" \
   -D icon="$APP/Contents/Resources/AppIcon.icns" \
-  "Interruptor Ollama" "$DMG"
+  "ModelNap" "$DMG"
 
 if [[ -n "${DEVELOPER_ID:-}" ]]; then
   codesign --force --timestamp --sign "$DEVELOPER_ID" "$DMG"

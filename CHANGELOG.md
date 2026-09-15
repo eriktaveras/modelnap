@@ -1,9 +1,14 @@
 # Changelog
 
-Todos los cambios notables de Interruptor Ollama. El formato sigue
+Todos los cambios notables de ModelNap (antes «Interruptor Ollama»). El formato sigue
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones, [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [1.2.0] — 2026-09-15
+
+### Cambiado
+- **Nuevo nombre: ModelNap.** Web en [modelnap.com](https://modelnap.com). Identificador
+  `com.taverassolutions.modelnap`: los ajustes de «Interruptor Ollama» no se heredan.
+- *Acerca de* e instalador con el nuevo lema: «Deja dormir a tus modelos locales y recupera la memoria del Mac».
 
 ### Añadido
 - Modo `--snapshot … demo` e imágenes del README generadas con `docs/generate-images.sh`.
@@ -33,6 +38,6 @@ Todos los cambios notables de Interruptor Ollama. El formato sigue
 - Modelo en memoria con *Liberar* y lista de modelos instalados con *Cargar*.
 - Binario universal, instalador `.dmg` firmado con Developer ID y notarizado por Apple.
 
-[Sin publicar]: https://github.com/eriktaveras/interruptor-ollama/compare/v1.1.0...main
-[1.1.0]: https://github.com/eriktaveras/interruptor-ollama/releases/tag/v1.1.0
-[1.0.0]: https://github.com/eriktaveras/interruptor-ollama/releases/tag/v1.0.0
+[1.2.0]: https://github.com/eriktaveras/modelnap/releases/tag/v1.2.0
+[1.1.0]: https://github.com/eriktaveras/modelnap/releases/tag/v1.1.0
+[1.0.0]: https://github.com/eriktaveras/modelnap/releases/tag/v1.0.0

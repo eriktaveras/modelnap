@@ -4,8 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP="build/Interruptor Ollama.app"
-BIN="$APP/Contents/MacOS/InterruptorOllama"
+APP="build/ModelNap.app"
+BIN="$APP/Contents/MacOS/ModelNap"
 SHOTS="build/shots"
 [[ -x "$BIN" ]] || ./build.sh
 mkdir -p "$SHOTS"

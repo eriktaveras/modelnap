@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compila Interruptor Ollama (binario universal: Apple Silicon + Intel) y arma el bundle.
+# Compila ModelNap (binario universal: Apple Silicon + Intel) y arma el bundle.
 # Sin proyecto de Xcode: swiftc directo.
 #   ./build.sh            -> construye en ./build
 #   ./build.sh --install  -> además lo copia a ~/Applications y lo relanza
@@ -17,7 +17,7 @@ if [[ "${1:-}" == "--test" ]]; then
 fi
 ROOT="$PWD"
 BUILD="$ROOT/build"
-APP="$BUILD/Interruptor Ollama.app"
+APP="$BUILD/ModelNap.app"
 VERSION="$(cat VERSION)"
 MIN_OS="14.0"
 
@@ -29,11 +29,11 @@ for arch in arm64 x86_64; do
   swiftc -O -swift-version 5 -target "$arch-apple-macos$MIN_OS" \
     -framework AppKit -framework SwiftUI -framework ServiceManagement \
     Sources/*.swift \
-    -o "$BUILD/InterruptorOllama-$arch"
+    -o "$BUILD/ModelNap-$arch"
 done
-lipo -create "$BUILD/InterruptorOllama-arm64" "$BUILD/InterruptorOllama-x86_64" \
-  -output "$APP/Contents/MacOS/InterruptorOllama"
-rm "$BUILD"/InterruptorOllama-{arm64,x86_64}
+lipo -create "$BUILD/ModelNap-arm64" "$BUILD/ModelNap-x86_64" \
+  -output "$APP/Contents/MacOS/ModelNap"
+rm "$BUILD"/ModelNap-{arm64,x86_64}
 
 echo "==> traducciones"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
@@ -51,10 +51,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleExecutable</key><string>InterruptorOllama</string>
-  <key>CFBundleIdentifier</key><string>com.taverassolutions.interruptor-ollama</string>
-  <key>CFBundleName</key><string>Interruptor Ollama</string>
-  <key>CFBundleDisplayName</key><string>Interruptor Ollama</string>
+  <key>CFBundleExecutable</key><string>ModelNap</string>
+  <key>CFBundleIdentifier</key><string>com.taverassolutions.modelnap</string>
+  <key>CFBundleName</key><string>ModelNap</string>
+  <key>CFBundleDisplayName</key><string>ModelNap</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
@@ -86,9 +86,9 @@ echo "==> listo: $APP"
 if [[ "${1:-}" == "--install" ]]; then
   DEST="$HOME/Applications"
   mkdir -p "$DEST"
-  pkill -x InterruptorOllama 2>/dev/null || true
-  rm -rf "$DEST/Interruptor Ollama.app"
+  pkill -x ModelNap 2>/dev/null || true
+  rm -rf "$DEST/ModelNap.app"
   cp -R "$APP" "$DEST/"
-  echo "==> instalado en $DEST/Interruptor Ollama.app"
-  open "$DEST/Interruptor Ollama.app"
+  echo "==> instalado en $DEST/ModelNap.app"
+  open "$DEST/ModelNap.app"
 fi

@@ -44,11 +44,12 @@ enum Backend: Equatable {
 enum Paths {
     static var logsDir: URL {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Logs/Interruptor Ollama")
+            .appendingPathComponent("Library/Logs/ModelNap")
     }
     static var ownLog: URL { logsDir.appendingPathComponent("ollama.log") }
     static let download = URL(string: "https://ollama.com/download")!
     static let brand = URL(string: "https://taverassolutions.com")!
+    static let web = URL(string: "https://modelnap.com")!
 }
 
 enum Shell {

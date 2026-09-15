@@ -1,19 +1,21 @@
 <div align="center">
 
-<img src="docs/images/icon.png" width="112" alt="Ícono de Interruptor Ollama">
+<img src="docs/images/icon.png" width="112" alt="Ícono de ModelNap">
 
-# Interruptor Ollama
+# ModelNap
 
-**Enciende y apaga Ollama desde la barra de menús del Mac, y libera la memoria del modelo cuando no lo usas.**
+**Deja dormir a tus modelos locales y recupera la memoria del Mac.**<br>
+<sub>Let idle local LLMs sleep. Get your Mac's memory back.</sub>
 
-[![Versión](https://img.shields.io/badge/versión-1.1.0-047857?style=flat-square)](https://github.com/eriktaveras/interruptor-ollama/releases/latest)
+[![Versión](https://img.shields.io/badge/versión-1.2.0-047857?style=flat-square)](https://github.com/eriktaveras/modelnap/releases/latest)
 ![macOS](https://img.shields.io/badge/macOS-14%2B-111?style=flat-square&logo=apple&logoColor=white)
 ![Arquitectura](https://img.shields.io/badge/Apple%20Silicon%20%7C%20Intel-universal-111?style=flat-square)
 ![Swift](https://img.shields.io/badge/Swift-AppKit%20%2B%20SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white)
 ![Notarizada](https://img.shields.io/badge/Apple-firmada%20y%20notarizada-34D399?style=flat-square&logo=apple&logoColor=white)
 ![Idiomas](https://img.shields.io/badge/idiomas-ES%20%7C%20EN-5C6B64?style=flat-square)
 
-[Descargar](https://github.com/eriktaveras/interruptor-ollama/releases/latest) ·
+[Web](https://modelnap.com) ·
+[Descargar](https://github.com/eriktaveras/modelnap/releases/latest) ·
 [Funciones](#-funciones) ·
 [Instalación](#-instalación) ·
 [Cómo funciona](#-cómo-funciona) ·
@@ -23,7 +25,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-  <img src="docs/images/hero-light.png" width="820" alt="Panel de Interruptor Ollama abierto desde la barra de menús, con el modelo cargado, la memoria del Mac y los ajustes">
+  <img src="docs/images/hero-light.png" width="820" alt="Panel de ModelNap abierto desde la barra de menús, con el modelo cargado, la memoria del Mac y los ajustes">
 </picture>
 
 </div>
@@ -34,7 +36,7 @@
 
 Un modelo local de 20–30 GB se queda en la RAM aunque no lo estés usando. Apagar Ollama tampoco es obvio:
 depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vuelve a arrancar solo.
-**Interruptor Ollama** lo resuelve con un clic, sin abrir la Terminal.
+**ModelNap** deja dormir al modelo cuando no lo usas y te devuelve el control de Ollama con un clic, sin abrir la Terminal.
 
 ## ✨ Funciones
 
@@ -52,17 +54,17 @@ depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vu
 
 ## 📥 Instalación
 
-1. Descarga **`Interruptor-Ollama-1.1.0.dmg`** desde [Releases](https://github.com/eriktaveras/interruptor-ollama/releases/latest).
+1. Descarga **`ModelNap-1.2.0.dmg`** desde [Releases](https://github.com/eriktaveras/modelnap/releases/latest).
 2. Ábrelo y arrastra la app a **Aplicaciones**.
 3. Ábrela: aparece en la **barra de menús, arriba a la derecha**.
 
 <p align="center">
-  <img src="docs/images/installer.png" width="560" alt="Ventana del instalador: arrastrar Interruptor Ollama a Aplicaciones">
+  <img src="docs/images/installer.png" width="560" alt="Ventana del instalador: arrastrar ModelNap a Aplicaciones">
 </p>
 
 > [!NOTE]
 > La app y el instalador van **firmados con Developer ID y notarizados por Apple**: abren sin avisos de Gatekeeper.
-> Para verificar la descarga: `shasum -a 256 -c Interruptor-Ollama-1.1.0.dmg.sha256`
+> Para verificar la descarga: `shasum -a 256 -c ModelNap-1.2.0.dmg.sha256`
 
 **Requisitos:** macOS 14 Sonoma o superior · Apple Silicon o Intel · [Ollama](https://ollama.com/download) instalado.
 
@@ -143,7 +145,7 @@ carpeta `.lproj` con las mismas claves.
 
 - Solo se conecta a la API local de Ollama (`127.0.0.1:11434`, o `OLLAMA_HOST` si está definido).
 - No hay cuentas, telemetría ni analítica, y no envía nada a internet.
-- Las únicas páginas externas que abre son las que pulses: ollama.com/download y taverassolutions.com.
+- Las únicas páginas externas que abre son las que pulses: ollama.com/download, modelnap.com y taverassolutions.com.
 
 ## 🛠️ Desarrollo
 
@@ -161,19 +163,19 @@ App nativa (AppKit + SwiftUI) **sin proyecto de Xcode**: se compila con `swiftc`
 ### Publicar una versión
 
 ```bash
-echo 1.2.0 > VERSION
+echo 1.3.0 > VERSION
 DEVELOPER_ID="Developer ID Application: Erik Manuel Taveras Tavarez (794R79NU32)" \
 NOTARY_PROFILE=taveras-notary ./package.sh
 ```
 
 `package.sh` firma con runtime endurecido, **notariza y grapa** la app y el `.dmg`, y deja
-`dist/Interruptor-Ollama-<versión>.dmg` con su `.sha256`. Las credenciales de notarización viven en el
+`dist/ModelNap-<versión>.dmg` con su `.sha256`. Las credenciales de notarización viven en el
 llavero (`xcrun notarytool store-credentials`). Sin esas variables sale una build ad-hoc solo para pruebas.
 
 ### Herramientas de línea de comandos
 
 ```bash
-B="/Applications/Interruptor Ollama.app/Contents/MacOS/InterruptorOllama"
+B="/Applications/ModelNap.app/Contents/MacOS/ModelNap"
 "$B" --status                 # mecanismo detectado y si la API responde
 "$B" --on | --off             # mismo camino que el botón del panel
 "$B" --memory                 # memoria del Mac y CPU de los runners
@@ -206,7 +208,8 @@ packaging/                Ajustes de dmgbuild
 - [ ] Probar la detección con Ollama.app
 - [ ] Atajos de Apple y Siri («Apagar Ollama»)
 - [ ] Descargar y borrar modelos desde el panel
-- [ ] Enlaces `interruptor-ollama://on|off` para Raycast y Alfred
+- [ ] Enlaces `modelnap://on|off` para Raycast y Alfred
+- [ ] Web en [modelnap.com](https://modelnap.com) con descarga pública
 - [ ] Control en el Centro de Control (macOS 26)
 
 Historial de cambios en [CHANGELOG.md](CHANGELOG.md).
@@ -247,7 +250,7 @@ No. Libera memoria y te deja controlar cuándo está encendido Ollama; la veloci
 
 <div align="center">
 <sub>
-Hecho por <a href="https://taverassolutions.com"><b>Taveras Solutions</b></a> ·
+<a href="https://modelnap.com"><b>modelnap.com</b></a> · Hecho por <a href="https://taverassolutions.com"><b>Taveras Solutions</b></a> ·
 © 2026 Taveras Solutions LLC. Todos los derechos reservados.<br>
 Ollama es una marca de sus respectivos propietarios. Este proyecto no está afiliado a Ollama.
 </sub>

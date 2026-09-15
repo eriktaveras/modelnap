@@ -56,7 +56,7 @@ struct ContentView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(ollama.power == .on || showingSettings ? t.accent : t.muted)
             VStack(alignment: .leading, spacing: 0) {
-                Text(showingSettings ? tr("Ajustes") : "Interruptor Ollama")
+                Text(showingSettings ? tr("Ajustes") : "ModelNap")
                     .font(Brand.sans(14, .semibold))
                 Text(subtitle)
                     .font(Brand.mono(10))
@@ -517,7 +517,7 @@ struct SettingsView: View {
                                isOn: prefs.hotKeyEnabled) { prefs.hotKeyEnabled.toggle() }
                     Rectangle().fill(t.line).frame(height: 1)
                     settingRow(title: tr("Abrir al iniciar sesión"),
-                               detail: tr("El interruptor siempre a mano en la barra"),
+                               detail: tr("Siempre a mano en la barra de menús"),
                                isOn: prefs.opensAtLogin) { try? prefs.toggleLogin() }
                 }
             }
@@ -552,7 +552,7 @@ struct SettingsView: View {
             }
 
             HStack {
-                Eyebrow(text: "Interruptor Ollama \(Bundle.main.shortVersion)", theme: t)
+                Eyebrow(text: "ModelNap \(Bundle.main.shortVersion)", theme: t)
                 Spacer()
                 Button(tr("Ver el log de Ollama")) { prefs.openLog?() }
                     .buttonStyle(.plain)
