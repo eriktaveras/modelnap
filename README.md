@@ -13,7 +13,8 @@ Hecha por [Taveras Solutions](https://taverassolutions.com). Proyecto independie
   - **Memoria del Mac**: cuánta RAM usa el Mac (mismo cálculo que el Monitor de Actividad), qué parte es el
     modelo, la presión de memoria del sistema y *Liberar* para sacar el modelo sin apagar Ollama.
   - **Modelos instalados**: pasa el ratón por encima y pulsa *Cargar*.
-- **⌥⌘O** desde cualquier app enciende o apaga Ollama (se desactiva en Ajustes).
+- **⌥⌘O** desde cualquier app enciende o apaga Ollama (se desactiva en Ajustes). Si otra app usa la misma
+  combinación, macOS no avisa y no se sabe cuál de las dos la recibe.
 - **Ajustes** (engranaje):
   - **Liberar memoria sin uso**: nunca, 5, 15, 30 o 60 min. Si el modelo no genera nada en ese tiempo se
     descarga; Ollama sigue encendido y lo recarga con el siguiente mensaje.

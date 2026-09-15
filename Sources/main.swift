@@ -66,9 +66,6 @@ if let flag = CommandLine.arguments.dropFirst().first(where: { ["--status", "--o
         print(wait(for: false, seconds: 30) ? "apagado (\(backend.summary))" : "sigue respondiendo"); exit(0)
     default:
         print("mecanismo: \(backend.summary) · API \(OllamaAPI.hostLabel): \(apiUp() ? "responde" : "no responde")")
-        let probe = HotKey {}
-        print("atajo \(HotKey.display): \(probe.register() ? "libre" : "ocupado por otra app")")
-        probe.unregister()
         exit(0)
     }
 }
@@ -196,7 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if on {
             prefs.hotKeyError = hotKey.register()
                 ? nil
-                : tr("Otra app ya usa %@. Desactiva el atajo en Ajustes o libéralo en esa app.", HotKey.display)
+                : tr("No se pudo activar el atajo %@.", HotKey.display)
         } else {
             hotKey.unregister()
             prefs.hotKeyError = nil

@@ -14,7 +14,9 @@ final class HotKey {
         self.action = action
     }
 
-    /// Devuelve false si otra app ya tiene la combinación.
+    /// Devuelve false si el sistema rechaza el registro. Ojo: macOS solo detecta
+    /// el conflicto dentro del mismo proceso (-9878); si otra app registra ⌥⌘O,
+    /// las dos lo consiguen sin error y no hay forma de saberlo desde aquí.
     @discardableResult
     func register() -> Bool {
         guard ref == nil else { return true }

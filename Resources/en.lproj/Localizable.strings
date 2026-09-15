@@ -55,7 +55,7 @@
 "Abrir al iniciar sesión" = "Open at login";
 "El interruptor siempre a mano en la barra" = "The switch always ready in the menu bar";
 "Ver el log de Ollama" = "View Ollama log";
-"Otra app ya usa %@. Desactiva el atajo en Ajustes o libéralo en esa app." = "Another app already uses %@. Turn the shortcut off in Settings or free it in that app.";
+"No se pudo activar el atajo %@." = "Couldn't enable the %@ shortcut.";
 
 /* Inicio de sesión */
 "¿Abrir al iniciar sesión?" = "Open at login?";
