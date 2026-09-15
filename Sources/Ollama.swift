@@ -355,10 +355,11 @@ final class OllamaController: ObservableObject {
     /// Minutos sin uso tras los que se libera la memoria; 0 = nunca.
     @Published var idleReleaseMinutes: Int = UserDefaults.standard.integer(forKey: "idleReleaseMinutes") {
         didSet {
-            UserDefaults.standard.set(idleReleaseMinutes, forKey: "idleReleaseMinutes")
+            if !isDemo { UserDefaults.standard.set(idleReleaseMinutes, forKey: "idleReleaseMinutes") }
             tracker.touch()
         }
     }
+    private(set) var isDemo = false
     /// Solo para pruebas: límite en segundos que manda sobre los minutos.
     var idleLimitOverride: TimeInterval?
 
@@ -391,7 +392,7 @@ final class OllamaController: ObservableObject {
     }
 
     func refresh() async {
-        guard !refreshing else { return }
+        guard !refreshing, !isDemo else { return }
         refreshing = true
         defer { refreshing = false }
 
@@ -510,6 +511,25 @@ final class OllamaController: ObservableObject {
             }
             await refresh()
         }
+    }
+
+    /// Estado de ejemplo para las capturas del README (`--snapshot … demo`): los
+    /// modelos y tamaños reales de un Mac de 48 GB, sin tocar Ollama ni los ajustes.
+    func loadDemo() {
+        isDemo = true
+        power = .on
+        backend = .launchAgent(label: "homebrew.mxcl.ollama", plist: "")
+        version = "0.33.0"
+        loaded = [LoadedModel(name: "qwen3.8:27b-mlx", bytes: 23_126_298_344, context: 131_072)]
+        installed = [
+            InstalledModel(name: "gemma4:26b-nvfp4", bytes: 18_334_412_658, quantization: "nvfp4", vision: false, tools: true),
+            InstalledModel(name: "muse-glimmer:30b-mlx", bytes: 21_232_871_036, quantization: nil, vision: true, tools: true),
+            InstalledModel(name: "qwen3.8:27b-mlx", bytes: 18_210_000_000, quantization: "nvfp4", vision: true, tools: true),
+        ]
+        memory = SystemMemory(total: 51_539_607_552, used: 33_900_000_000, pressure: .normal)
+        idleReleaseMinutes = 30
+        idleSeconds = 7 * 60 + 12
+        error = nil
     }
 
     func load(_ model: String) { keepAlive(model, -1) }

@@ -359,7 +359,8 @@ struct MemoryCard: View {
     }
 
     private func idleLine(_ m: LoadedModel) -> String {
-        var parts = [m.bytes.memoryGB]
+        var parts: [String] = []
+        if ollama.idleLimit == nil { parts.append(m.bytes.memoryGB) }
         if let idle = ollama.idleSeconds, idle >= 60 {
             parts.append(tr("sin uso %d min", minutes(idle)))
         }

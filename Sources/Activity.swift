@@ -1,7 +1,7 @@
 import Foundation
 
 /// Ollama no expone cuándo fue la última petición, pero su proceso `ollama runner`
-/// (uno por modelo cargado) solo gasta CPU mientras procesa. Medido en un M4 con
+/// (uno por modelo cargado) solo gasta CPU mientras procesa. Medido en un M5 Pro con
 /// gemma4 26B: 0,06 s de CPU en 30 s de reposo frente a 0,99 s al generar 104
 /// tokens. Con esa diferencia basta mirar cuánto CPU sumó desde la última muestra.
 enum ProcessCPU {

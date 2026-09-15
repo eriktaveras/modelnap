@@ -4,7 +4,7 @@ import ServiceManagement
 
 // Uso por terminal, con el mismo camino que el interruptor del panel:
 //   InterruptorOllama --status | --on | --off
-//   InterruptorOllama --snapshot salida.png [dark|light]
+//   InterruptorOllama --snapshot salida.png [dark|light] [settings] [demo]
 if CommandLine.arguments.contains("--memory") {
     let m = SystemMemory.current()
     print("memoria usada \(m.used.memoryGB) de \(m.total.memoryGB) · presión \(m.pressure)")
@@ -104,7 +104,15 @@ final class Prefs: ObservableObject {
             && SMAppService.mainApp.status != .enabled
     }
 
-    var opensAtLogin: Bool { SMAppService.mainApp.status == .enabled }
+    private var demoLogin: Bool?
+    var opensAtLogin: Bool { demoLogin ?? (SMAppService.mainApp.status == .enabled) }
+
+    /// Para las capturas: sin la pregunta de inicio de sesión y con el atajo activo.
+    func loadDemo() {
+        shouldOfferLogin = false
+        demoLogin = true
+        hotKeyError = nil
+    }
 
     func answerLogin(_ yes: Bool) {
         UserDefaults.standard.set(true, forKey: askedKey)
@@ -129,11 +137,17 @@ if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.argum
     let rest = CommandLine.arguments.dropFirst(i + 2)
     let dark = !rest.contains("light")
     let settings = rest.contains("settings")
+    let demo = rest.contains("demo")
     MainActor.assumeIsolated {
         let ollama = OllamaController()
         let prefs = Prefs()
         Task { @MainActor in
-            await ollama.refresh()
+            if demo {
+                ollama.loadDemo()
+                prefs.loadDemo()
+            } else {
+                await ollama.refresh()
+            }
             let view = ContentView(ollama: ollama, prefs: prefs, showingSettings: settings)
                 .environment(\.colorScheme, dark ? .dark : .light)
             let r = ImageRenderer(content: view)
