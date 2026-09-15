@@ -1,0 +1,23 @@
+name: Compilar y probar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Versión de Swift
+        run: swift --version
+      - name: Pruebas de IdleTracker
+        run: ./build.sh --test
+      - name: Compilar la app (universal, firma ad-hoc)
+        run: ./build.sh
+      - name: Comprobar el bundle
+        run: |
+          lipo -archs build/ModelNap.app/Contents/MacOS/ModelNap
+          codesign --verify --strict build/ModelNap.app
+          build/ModelNap.app/Contents/MacOS/ModelNap --status || true

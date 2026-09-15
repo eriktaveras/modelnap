@@ -1,0 +1,43 @@
+name: 🐞 Fallo
+description: Algo no funciona como debería
+labels: [fallo]
+body:
+  - type: textarea
+    id: que-pasa
+    attributes:
+      label: Qué pasa
+      description: Qué hiciste, qué esperabas y qué ocurrió.
+    validations:
+      required: true
+  - type: dropdown
+    id: instalacion
+    attributes:
+      label: ¿Cómo arranca Ollama en tu Mac?
+      options:
+        - Ollama.app (la app oficial)
+        - brew services
+        - LaunchAgent propio
+        - ollama serve a mano
+        - No lo sé
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión de ModelNap
+      placeholder: "1.2.1"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS y chip
+      placeholder: "macOS 26.6, Apple M4 / Intel"
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: Salida de --status
+      description: 'Ejecuta `/Applications/ModelNap.app/Contents/MacOS/ModelNap --status` y pega el resultado.'
+      render: text

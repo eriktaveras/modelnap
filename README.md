@@ -7,19 +7,22 @@
 **Deja dormir a tus modelos locales y recupera la memoria del Mac.**<br>
 <sub>Let idle local LLMs sleep. Get your Mac's memory back.</sub>
 
-[![Versión](https://img.shields.io/badge/versión-1.2.0-047857?style=flat-square)](https://github.com/eriktaveras/modelnap/releases/latest)
+[![Versión](https://img.shields.io/badge/versión-1.2.1-047857?style=flat-square)](https://github.com/eriktaveras/modelnap/releases/latest)
 ![macOS](https://img.shields.io/badge/macOS-14%2B-111?style=flat-square&logo=apple&logoColor=white)
 ![Arquitectura](https://img.shields.io/badge/Apple%20Silicon%20%7C%20Intel-universal-111?style=flat-square)
 ![Swift](https://img.shields.io/badge/Swift-AppKit%20%2B%20SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white)
 ![Notarizada](https://img.shields.io/badge/Apple-firmada%20y%20notarizada-34D399?style=flat-square&logo=apple&logoColor=white)
 ![Idiomas](https://img.shields.io/badge/idiomas-ES%20%7C%20EN-5C6B64?style=flat-square)
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-047857?style=flat-square)](LICENSE)
+[![Compilación](https://img.shields.io/github/actions/workflow/status/eriktaveras/modelnap/build.yml?branch=main&style=flat-square&label=build)](https://github.com/eriktaveras/modelnap/actions/workflows/build.yml)
 
 [Web](https://modelnap.com) ·
 [Descargar](https://github.com/eriktaveras/modelnap/releases/latest) ·
 [Funciones](#-funciones) ·
 [Instalación](#-instalación) ·
 [Cómo funciona](#-cómo-funciona) ·
-[Desarrollo](#%EF%B8%8F-desarrollo)
+[Desarrollo](#%EF%B8%8F-desarrollo) ·
+[Contribuir](#-contribuir)
 
 <br>
 
@@ -51,10 +54,11 @@ depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vu
 | 🌍 | **Español e inglés** | Sigue el idioma del sistema o elígelo en Ajustes. |
 | 🌗 | **Claro y oscuro** | Se adapta a la apariencia de macOS. |
 | 🔒 | **Privada** | Solo habla con Ollama en tu Mac. Sin cuentas, sin telemetría, sin analítica. |
+| 🧾 | **Open source** | Código abierto bajo licencia MIT: puedes revisar exactamente qué hace. |
 
 ## 📥 Instalación
 
-1. Descarga **`ModelNap-1.2.0.dmg`** desde [Releases](https://github.com/eriktaveras/modelnap/releases/latest).
+1. Descarga **`ModelNap-1.2.1.dmg`** desde [Releases](https://github.com/eriktaveras/modelnap/releases/latest).
 2. Ábrelo y arrastra la app a **Aplicaciones**.
 3. Ábrela: aparece en la **barra de menús, arriba a la derecha**.
 
@@ -64,7 +68,7 @@ depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vu
 
 > [!NOTE]
 > La app y el instalador van **firmados con Developer ID y notarizados por Apple**: abren sin avisos de Gatekeeper.
-> Para verificar la descarga: `shasum -a 256 -c ModelNap-1.2.0.dmg.sha256`
+> Para verificar la descarga: `shasum -a 256 -c ModelNap-1.2.1.dmg.sha256`
 
 **Requisitos:** macOS 14 Sonoma o superior · Apple Silicon o Intel · [Ollama](https://ollama.com/download) instalado.
 
@@ -164,7 +168,7 @@ la esquina. Es un dibujo propio definido en [`Sources/Logo.swift`](Sources/Logo.
 ## 🔒 Privacidad
 
 - Solo se conecta a la API local de Ollama (`127.0.0.1:11434`, o `OLLAMA_HOST` si está definido).
-- No hay cuentas, telemetría ni analítica, y no envía nada a internet.
+- No hay cuentas, telemetría ni analítica, y no envía nada a internet. El código es abierto: puedes comprobarlo.
 - Las únicas páginas externas que abre son las que pulses: ollama.com/download, modelnap.com y taverassolutions.com.
 
 ## 🛠️ Desarrollo
@@ -236,6 +240,17 @@ packaging/                Ajustes de dmgbuild
 
 Historial de cambios en [CHANGELOG.md](CHANGELOG.md).
 
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Donde más ayuda ahora mismo:
+
+- 🧪 **Probar con Ollama.app** y en **Macs Intel**: abre un [issue](https://github.com/eriktaveras/modelnap/issues/new/choose) contando cómo te fue.
+- 🌍 **Traducciones**: copia `Resources/en.lproj` a tu idioma.
+- 🔌 **Otros motores** (LM Studio, MLX, llama.cpp): propón el enfoque en un issue antes de programar.
+
+Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir un PR. Los problemas de seguridad se reportan en privado
+(ver [SECURITY.md](SECURITY.md)).
+
 ## ❓ Preguntas frecuentes
 
 <details>
@@ -263,6 +278,12 @@ Puede que otra app use la misma combinación: macOS no avisa de esos conflictos 
 </details>
 
 <details>
+<summary><b>¿Puedo hacer un fork?</b></summary>
+<br>
+Sí, el código es MIT. Si distribuyes una versión modificada, ponle otro nombre, otro logo y otro identificador de app: el nombre «ModelNap» y su logo están reservados (ver <a href="TRADEMARKS.md">TRADEMARKS.md</a>).
+</details>
+
+<details>
 <summary><b>¿Hace más rápidos los modelos?</b></summary>
 <br>
 No. Libera memoria y te deja controlar cuándo está encendido Ollama; la velocidad depende del modelo y del Mac.
@@ -273,7 +294,7 @@ No. Libera memoria y te deja controlar cuándo está encendido Ollama; la veloci
 <div align="center">
 <sub>
 <a href="https://modelnap.com"><b>modelnap.com</b></a> · Hecho por <a href="https://taverassolutions.com"><b>Taveras Solutions</b></a> ·
-© 2026 Taveras Solutions LLC. Todos los derechos reservados.<br>
+Código bajo <a href="LICENSE">licencia MIT</a> · el nombre y el logo de ModelNap están reservados (<a href="TRADEMARKS.md">TRADEMARKS.md</a>).<br>
 Ollama es una marca de sus respectivos propietarios. Este proyecto no está afiliado a Ollama.
 </sub>
 </div>
