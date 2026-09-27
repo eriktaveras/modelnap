@@ -8,7 +8,9 @@
 
 **English** · [Español](README.es.md)
 
-[![Version](https://img.shields.io/badge/version-1.2.1-047857?style=flat-square)](https://github.com/eriktaveras/modelnap/releases/latest)
+<a href="https://www.producthunt.com/products/modelnap?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-modelnap" target="_blank" rel="noopener noreferrer"><img alt="ModelNap - Your local AI, on only when you use it | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1262618&theme=light&t=1790524110379"></a>
+
+[![Version](https://img.shields.io/badge/version-1.3.0-047857?style=flat-square)](https://github.com/eriktaveras/modelnap/releases/latest)
 ![macOS](https://img.shields.io/badge/macOS-14%2B-111?style=flat-square&logo=apple&logoColor=white)
 ![Architecture](https://img.shields.io/badge/Apple%20Silicon%20%7C%20Intel-universal-111?style=flat-square)
 ![Swift](https://img.shields.io/badge/Swift-AppKit%20%2B%20SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white)
