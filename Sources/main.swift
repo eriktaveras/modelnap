@@ -41,6 +41,91 @@ if let i = CommandLine.arguments.firstIndex(of: "--idle-test"),
     }
 }
 
+// Splash por terminal, con el mismo camino que su interruptor:
+//   ModelNap --splash status | on [modelo] | off
+if let i = CommandLine.arguments.firstIndex(of: "--splash") {
+    let args = Array(CommandLine.arguments.dropFirst(i + 1))
+    func up() -> Bool {
+        let sem = DispatchSemaphore(value: 0)
+        var ok = false
+        Task.detached { ok = await SplashAPI.healthy(); sem.signal() }
+        sem.wait()
+        return ok
+    }
+    guard SplashCLI.binary() != nil else { print("Splash no está instalado"); exit(1) }
+    switch args.first ?? "status" {
+    case "on":
+        // El mismo camino que el interruptor: vacía antes la memoria de Ollama.
+        MainActor.assumeIsolated {
+            let splash = SplashController()
+            let ollama = OllamaController()
+            splash.freeOtherEngines = {
+                await ollama.refresh()
+                let names = ollama.loaded.map(\.name)
+                await ollama.releaseAll()
+                if !names.isEmpty { print("liberado de Ollama: \(names.joined(separator: ", "))") }
+            }
+            let start = Date()
+            Task { @MainActor in
+                await splash.refresh()
+                if let m = args.dropFirst().first { splash.selected = m }
+                splash.setOn(true)
+                while Date().timeIntervalSince(start) < 200 {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    await splash.refresh()
+                    if splash.power == .on {
+                        print(String(format: "encendido %@ en %.1f s · %@", splash.selected,
+                                     Date().timeIntervalSince(start), splash.footprint.memoryGB)); exit(0)
+                    }
+                    if splash.power == .off, let e = splash.error { print(e); exit(1) }
+                }
+                print("no respondió a tiempo"); exit(1)
+            }
+            RunLoop.main.run()
+        }
+    case "idle-test":
+        // Apagado automático con un límite en segundos: --splash idle-test 20
+        let limit = args.dropFirst().first.flatMap(TimeInterval.init) ?? 20
+        MainActor.assumeIsolated {
+            let splash = SplashController()
+            splash.idleLimitOverride = limit
+            let start = Date()
+            Task { @MainActor in
+                while Date().timeIntervalSince(start) < limit + 120 {
+                    await splash.refresh()
+                    let idle = splash.idleSeconds.map { String(format: "%.1f", $0) } ?? "-"
+                    print(String(format: "[%5.1fs] %@ · %@ · sin uso=%@ s", Date().timeIntervalSince(start),
+                                 "\(splash.power)", splash.footprint.memoryGB, idle))
+                    if splash.power == .off, splash.autoStopped != nil { print("apagado por falta de uso"); exit(0) }
+                    try? await Task.sleep(nanoseconds: 2_500_000_000)
+                }
+                print("no se apagó a tiempo"); exit(1)
+            }
+            RunLoop.main.run()
+        }
+    case "off":
+        let start = Date()
+        SplashCLI.stop()
+        print(String(format: "apagado en %.1f s", Date().timeIntervalSince(start))); exit(0)
+    default:
+        let tree = SplashCLI.processTree(SplashCLI.serverPIDs())
+        print("modelos: \(SplashCLI.installedModels().map { "\($0.id) (\($0.bytes.gigabytes))" }.joined(separator: ", "))")
+        print("API \(SplashAPI.hostLabel): \(up() ? "responde" : "no responde") · modelo en marcha: \(SplashCLI.lockedModel() ?? "-")")
+        for pid in tree {
+            let cpu = ProcessCPU.seconds(pid).map { String(format: "%.2f", $0) } ?? "-"
+            print("  pid \(pid): \(cpu) s de CPU")
+        }
+        let sem = DispatchSemaphore(value: 0)
+        var st: SplashStatus?
+        Task.detached { st = await SplashAPI.status(); sem.signal() }
+        sem.wait()
+        if let st {
+            print("  memoria del motor \(st.bytes.memoryGB) · peticiones \(st.submitted) · \(st.busy ? "generando" : "en reposo")")
+        }
+        exit(0)
+    }
+}
+
 if let flag = CommandLine.arguments.dropFirst().first(where: { ["--status", "--on", "--off"].contains($0) }) {
     func apiUp() -> Bool {
         let sem = DispatchSemaphore(value: 0)
@@ -84,6 +169,7 @@ final class Prefs: ObservableObject {
     }
     var onHotKeyChange: ((Bool) -> Void)?
     var openLog: (() -> Void)?
+    var openSplashLog: (() -> Void)?
     @Published private(set) var language = Language.current
 
     /// Cambia el idioma y relanza la app: los textos se resuelven al arrancar.
@@ -140,15 +226,19 @@ if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.argum
     let demo = rest.contains("demo")
     MainActor.assumeIsolated {
         let ollama = OllamaController()
+        let splash = SplashController()
         let prefs = Prefs()
         Task { @MainActor in
             if demo {
-                ollama.loadDemo()
+                let withSplash = rest.contains("splash")
+                ollama.loadDemo(modelLoaded: !withSplash)
                 prefs.loadDemo()
+                if withSplash { splash.loadDemo() }
             } else {
                 await ollama.refresh()
+                await splash.refresh()
             }
-            let view = ContentView(ollama: ollama, prefs: prefs, showingSettings: settings)
+            let view = ContentView(ollama: ollama, splash: splash, prefs: prefs, showingSettings: settings)
                 .environment(\.colorScheme, dark ? .dark : .light)
             let r = ImageRenderer(content: view)
             r.scale = 2
@@ -169,8 +259,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
     private let ollama = OllamaController()
+    private let splash = SplashController()
     private let prefs = Prefs()
     private var blink: Timer?
+    private var splashTimer: Timer?
     private var blinkOn = true
     private lazy var hotKey = HotKey { [weak self] in self?.ollama.toggle() }
 
@@ -183,7 +275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
-        let hosting = NSHostingController(rootView: ContentView(ollama: ollama, prefs: prefs))
+        let hosting = NSHostingController(rootView: ContentView(ollama: ollama, splash: splash, prefs: prefs))
         hosting.sizingOptions = [.preferredContentSize]
         popover.contentViewController = hosting
         popover.behavior = .transient
@@ -191,11 +283,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         prefs.onHotKeyChange = { [weak self] on in self?.applyHotKey(on) }
         prefs.openLog = { [weak self] in self?.openLogs() }
+        prefs.openSplashLog = { [weak self] in self?.openSplashLogs() }
         applyHotKey(prefs.hotKeyEnabled)
 
-        ollama.onPowerChange = { [weak self] p in self?.paint(p) }
-        paint(ollama.power)
+        ollama.onPowerChange = { [weak self] _ in self?.repaint() }
+        splash.onPowerChange = { [weak self] _ in self?.repaint() }
+        splash.freeOtherEngines = { [weak self] in await self?.ollama.releaseAll() }
+        repaint()
         ollama.startPolling()
+        Task { await splash.refresh() }
+        splashTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                Task { await self.splash.refresh() }
+            }
+        }
 
         // Primera vez: se abre el panel para que se vea dónde vive y qué hace.
         if prefs.shouldOfferLogin {
@@ -216,14 +318,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - ícono
 
-    private func paint(_ power: Power) {
+    /// El ícono resume los dos motores: parpadea si alguno cambia de estado y
+    /// lleva el punto si alguno está encendido.
+    private func repaint() {
+        let s = splash.power
+        if s.isTransition && !ollama.power.isTransition {
+            paint(s, name: "Splash")
+        } else if s == .on && ollama.power != .on && !ollama.power.isTransition {
+            paint(.on, name: "Splash")
+        } else {
+            paint(ollama.power, name: "Ollama")
+        }
+    }
+
+    private func paint(_ power: Power, name: String) {
         blink?.invalidate()
         blink = nil
         guard let button = statusItem.button else { return }
         switch power {
         case .on:
             button.image = Mark.statusImage(dot: .on, dimmed: false)
-            button.toolTip = tr("Ollama encendido")
+            button.toolTip = name == "Splash" ? tr("Splash encendido") : tr("Ollama encendido")
         case .off:
             button.image = Mark.statusImage(dot: .none, dimmed: true)
             button.toolTip = tr("Ollama apagado")
@@ -231,7 +346,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = Mark.statusImage(dot: .none, dimmed: true)
             button.toolTip = tr("Ollama no está instalado")
         case .starting, .stopping:
-            button.toolTip = power == .starting ? tr("Ollama arrancando…") : tr("Ollama apagándose…")
+            button.toolTip = name == "Splash"
+                ? (power == .starting ? tr("Splash arrancando…") : tr("Splash apagándose…"))
+                : (power == .starting ? tr("Ollama arrancando…") : tr("Ollama apagándose…"))
             blinkOn = true
             button.image = Mark.statusImage(dot: .busy, dimmed: false)
             blink = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
@@ -281,10 +398,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        if splash.isInstalled {
+            let item = add(menu, splash.power == .on ? tr("Apagar Splash") : tr("Encender Splash"), #selector(toggleSplash))
+            item.isEnabled = !splash.power.isTransition
+        }
+
         menu.addItem(.separator())
 
         let logs = add(menu, tr("Ver el log de Ollama"), #selector(openLogs))
         logs.isEnabled = ollama.backend.logURL != nil
+        if splash.isInstalled {
+            let splashLogs = add(menu, tr("Ver el log de Splash"), #selector(openSplashLogs))
+            splashLogs.isEnabled = splash.logURL != nil
+        }
 
         let login = add(menu, tr("Abrir al iniciar sesión"), #selector(toggleLogin))
         login.state = prefs.opensAtLogin ? .on : .off
@@ -309,9 +435,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func togglePower() { ollama.toggle() }
+    @objc private func toggleSplash() { splash.toggle() }
 
-    @objc private func openLogs() {
-        guard let url = ollama.backend.logURL else { return }
+    @objc private func openSplashLogs() { openInConsole(splash.logURL) }
+    @objc private func openLogs() { openInConsole(ollama.backend.logURL) }
+
+    private func openInConsole(_ url: URL?) {
+        guard let url else { return }
         if let console = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Console") {
             NSWorkspace.shared.open([url], withApplicationAt: console, configuration: NSWorkspace.OpenConfiguration())
         } else {
@@ -329,7 +459,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showAbout() {
         let credits = NSMutableAttributedString(
-            string: tr("Deja dormir a tus modelos locales y recupera la memoria del Mac.\n\nmodelnap.com\nHecho por Taveras Solutions LLC\n\nProyecto independiente, no afiliado a Ollama."),
+            string: tr("Deja dormir a tus modelos locales y recupera la memoria del Mac.\n\nmodelnap.com\nHecho por Taveras Solutions LLC\n\nProyecto independiente, no afiliado a Ollama ni a Inco AI."),
             attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor])
         let link = (credits.string as NSString).range(of: "modelnap.com")
         credits.addAttribute(.link, value: Paths.web, range: link)

@@ -50,6 +50,7 @@ depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vu
 | ⏻ | **Encender y apagar** | Un botón en el panel, o **⌥⌘O** desde cualquier app. |
 | 🔍 | **Detecta tu instalación** | Ollama.app, `brew services`, un LaunchAgent propio u `ollama serve` a mano. Lo apaga por el mismo camino por el que arranca. |
 | 🧹 | **Libera la memoria sin uso** | Tras 5, 15, 30 o 60 minutos sin generar, descarga el modelo. Ollama sigue encendido y lo recarga con el siguiente mensaje. |
+| 🌊 | **También Splash** | Enciende y apaga [Splash](https://github.com/incoai/splash) (Inco AI), muestra su memoria real, vacía los modelos de Ollama antes de arrancarlo y, si quieres, lo apaga sin uso. |
 | 📊 | **Memoria del Mac** | RAM usada (mismo cálculo que el Monitor de Actividad), qué parte ocupa el modelo y la presión de memoria del sistema. |
 | 🗂️ | **Modelos instalados** | Tamaño, cuantización y etiquetas de *visión* y *herramientas*. Carga o libera cualquiera con un clic. |
 | 🟢 | **Estado de un vistazo** | El logo en la barra de menús, con un punto verde, ámbar o sin punto. |
@@ -93,10 +94,12 @@ depende de cómo se instaló, y si lo haces por el camino equivocado macOS lo vu
 
 Desde el engranaje del panel:
 
-- **Liberar memoria sin uso** — nunca, 5, 15, 30 o 60 min.
-- **Atajo de teclado** — activa o desactiva ⌥⌘O.
-- **Abrir al iniciar sesión** — la app pregunta la primera vez, no se añade sola.
-- **Idioma** — automático, español o inglés.
+- **Ollama** — liberar el modelo sin uso (nunca, 5, 15, 30 o 60 min) y, si tienes Ollama.app y un LaunchAgent,
+  con cuál encenderlo.
+- **Splash** — apagarlo sin uso (nunca, 15, 30, 60 min o 2 h; va aparte porque Splash no vuelve solo), vaciar
+  Ollama antes y el modelo que sirve.
+- **General** — el atajo ⌥⌘O, abrir al iniciar sesión (la app pregunta la primera vez, no se añade sola) e idioma.
+- Enlaces a los logs de Ollama y de Splash.
 
 ## ⚙️ Cómo funciona
 
@@ -107,13 +110,14 @@ mecanismo y usa el suyo.
 
 | Si Ollama viene de… | Apagar | Encender | Verificado |
 |---|---|---|:-:|
-| **Ollama.app** (ollama.com) | Cierra la app | Abre la app | ⏳ pendiente |
+| **Ollama.app** (ollama.com) | Le pide salir y a los 2 s `SIGTERM` (la 0.34 rechaza el «salir» de otra app) | Abre la app | ✅ 0.34.4 |
 | **`brew services`** o LaunchAgent propio | `launchctl bootout` | `launchctl bootstrap` | ✅ |
 | **`ollama serve`** a mano | `SIGTERM` al servidor | Lanza `ollama serve` | ✅ |
 | **No instalado** | — | Lleva a ollama.com/download | ✅ |
 
 Detección, por orden: Ollama.app en marcha → LaunchAgent cargado → `ollama serve` suelto → lo que haya
-instalado. Si Ollama está apagado, recuerda el último mecanismo con el que estuvo encendido.
+instalado. Si Ollama está apagado, usa el elegido en Ajustes o, si no hay, el último con el que estuvo
+encendido (lo recuerda aunque cierres la app).
 
 ### Detectar un modelo «sin uso»
 
@@ -127,6 +131,19 @@ solo gasta CPU mientras trabaja:
 
 Cada 2,5 s la app suma la CPU de los runners (`proc_pid_rusage`). Si sube más de **0,08 s**, o cambia el modelo
 cargado, cuenta como uso. La lógica vive en [`IdleTracker`](Sources/Activity.swift) y está cubierta por pruebas.
+
+### Splash
+
+[Splash](https://github.com/incoai/splash) sirve un modelo en `127.0.0.1:8000` y no carga ni descarga modelos:
+`splash serve --model …` toma la memoria al arrancar y la devuelve al salir. Liberar Splash es apagarlo
+(`SIGINT`, como Ctrl+C). Dos cosas cambian respecto a Ollama:
+
+- **Memoria:** los pesos van mapeados desde los archivos del modelo, así que el Monitor de Actividad los cuenta
+  como caché y no como memoria de apps. ModelNap lee la cifra real del `/status` de Splash y la suma a la barra.
+- **Sin uso:** generar casi no gasta CPU (~0,03 s cada 2,5 s, el trabajo va en la GPU), así que lo del runner no
+  sirve. Cuenta las peticiones de `/status` ([`SplashActivity`](Sources/Splash.swift), cubierto por pruebas).
+
+Necesita unos 21 GB libres para arrancar. Si no los hay, el panel dice cuánto necesita y cuánto hay.
 
 ### Por qué no está en la Mac App Store
 
@@ -206,6 +223,7 @@ B="/Applications/ModelNap.app/Contents/MacOS/ModelNap"
 "$B" --on | --off             # mismo camino que el botón del panel
 "$B" --memory                 # memoria del Mac y CPU de los runners
 "$B" --idle-test 20           # prueba la liberación automática con 20 s de límite
+"$B" --splash status | on [modelo] | off | idle-test 20
 "$B" --snapshot panel.png [light|dark] [settings] [demo] [-AppleLanguages "(en)"]
 ```
 
@@ -215,6 +233,7 @@ B="/Applications/ModelNap.app/Contents/MacOS/ModelNap"
 Sources/
 ├── main.swift            Arranque, barra de menús, menú contextual y modos de terminal
 ├── Ollama.swift          Detección del mecanismo, encendido/apagado, API de Ollama y estado
+├── Splash.swift          Splash: arranque/apagado, /status, SplashActivity y estado
 ├── Activity.swift        CPU de los runners e IdleTracker («sin uso»)
 ├── SystemMemory.swift    Memoria usada y presión del sistema
 ├── HotKey.swift          Atajo global ⌥⌘O (Carbon, sin permiso de Accesibilidad)

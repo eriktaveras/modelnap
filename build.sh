@@ -3,7 +3,7 @@
 # Sin proyecto de Xcode: swiftc directo.
 #   ./build.sh            -> construye en ./build
 #   ./build.sh --install  -> además lo copia a ~/Applications y lo relanza
-#   ./build.sh --test     -> solo el banco de pruebas de IdleTracker
+#   ./build.sh --test     -> solo el banco de pruebas del «sin uso» (Ollama y Splash)
 # Para el instalador .dmg que se comparte: ./package.sh
 set -euo pipefail
 
@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 
 if [[ "${1:-}" == "--test" ]]; then
   mkdir -p build
-  swiftc -swift-version 5 Sources/Activity.swift Sources/Ollama.swift Sources/SystemMemory.swift Sources/L10n.swift Tests/main.swift \
+  swiftc -swift-version 5 Sources/Activity.swift Sources/Ollama.swift Sources/Splash.swift Sources/SystemMemory.swift Sources/L10n.swift Tests/main.swift \
     -o build/idle-tests 2>&1 | grep -v "^$" || true
   exec ./build/idle-tests
 fi

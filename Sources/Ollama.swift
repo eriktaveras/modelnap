@@ -14,6 +14,16 @@ enum Backend: Equatable {
     case binary(String)
     case missing
 
+    /// Nombre corto para el selector de ajustes.
+    var kind: String {
+        switch self {
+        case .launchAgent(let label, _): return label == "homebrew.mxcl.ollama" ? "brew services" : "LaunchAgent"
+        case .app: return "Ollama.app"
+        case .binary: return "ollama serve"
+        case .missing: return "-"
+        }
+    }
+
     var summary: String {
         switch self {
         case .launchAgent(let label, _):
@@ -133,8 +143,59 @@ enum Detector {
             .first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    /// Orden: lo que está en marcha manda sobre lo que solo está instalado.
+    /// Orden: lo que está en marcha manda sobre lo que solo está instalado, y
+    /// entre lo instalado, el último mecanismo con el que Ollama estuvo encendido.
     static func detect() -> Backend {
+        let running = detectRunning()
+        if let running { remember(running) }
+        return running ?? recalled(preferredKey) ?? recalled(lastKey) ?? detectInstalled()
+    }
+
+    private static let lastKey = "lastBackend"
+    /// Elegido en ajustes: manda sobre el último usado.
+    private static let preferredKey = "preferredBackend"
+
+    static func setPreferred(_ b: Backend) {
+        UserDefaults.standard.set(key(b), forKey: preferredKey)
+    }
+
+    static var preferred: Backend? { recalled(preferredKey) }
+
+    /// Todos los mecanismos instalados, para elegir en ajustes.
+    static func available() -> [Backend] {
+        var out: [Backend] = Launchd.ollamaAgents().map { .launchAgent(label: $0.label, plist: $0.plist) }
+        if let app = installedApp() { out.append(.app(app)) }
+        if out.isEmpty, let bin = binary() { out.append(.binary(bin)) }
+        return out
+    }
+
+    private static func key(_ b: Backend) -> String? {
+        switch b {
+        case .launchAgent(let label, _): return "agent:\(label)"
+        case .app: return "app"
+        case .binary: return "binary"
+        case .missing: return nil
+        }
+    }
+
+    private static func remember(_ b: Backend) {
+        guard let value = key(b) else { return }
+        UserDefaults.standard.set(value, forKey: lastKey)
+    }
+
+    /// Solo si sigue instalado igual que cuando se usó.
+    private static func recalled(_ defaultsKey: String) -> Backend? {
+        guard let value = UserDefaults.standard.string(forKey: defaultsKey) else { return nil }
+        if value.hasPrefix("agent:") {
+            let label = String(value.dropFirst(6))
+            return Launchd.ollamaAgents().first { $0.label == label }.map { .launchAgent(label: $0.label, plist: $0.plist) }
+        }
+        if value == "app" { return installedApp().map { .app($0) } }
+        if value == "binary" { return binary().map { .binary($0) } }
+        return nil
+    }
+
+    private static func detectRunning() -> Backend? {
         if let app = runningApp() {
             return .app(app.bundleURL ?? installedApp() ?? URL(fileURLWithPath: "/Applications/Ollama.app"))
         }
@@ -145,7 +206,12 @@ enum Detector {
         if !serverPIDs().isEmpty, let bin = binary() {
             return .binary(bin)
         }
+        return nil
+    }
+
+    private static func detectInstalled() -> Backend {
         if let app = installedApp() { return .app(app) }
+        let agents = Launchd.ollamaAgents()
         if let agent = agents.first { return .launchAgent(label: agent.label, plist: agent.plist) }
         if let bin = binary() { return .binary(bin) }
         return .missing
@@ -213,10 +279,18 @@ enum Switch {
         case .launchAgent(let label, _):
             return Launchd.stop(label: label)
         case .app:
-            Detector.runningApp()?.terminate()
-            // Si la app no cierra en 10 s, se apaga el servidor directamente.
-            for _ in 0..<20 where Detector.runningApp() != nil { usleep(500_000) }
-            Detector.runningApp()?.forceTerminate()
+            guard let app = Detector.runningApp() else { killServers(); return nil }
+            // La lista de NSWorkspace solo se refresca en el hilo principal: desde
+            // aquí se mira si el proceso sigue vivo.
+            let pid = app.processIdentifier
+            func alive() -> Bool { kill(pid, 0) == 0 }
+            app.terminate()
+            // Ollama.app 0.34 rechaza el «salir» de otra app («User canceled»),
+            // pero con SIGTERM cierra ella y su servidor en 0,15 s.
+            for _ in 0..<20 where alive() { usleep(100_000) }
+            if alive() { kill(pid, SIGTERM) }
+            for _ in 0..<50 where alive() { usleep(100_000) }
+            if alive() { kill(pid, SIGKILL) }
             killServers()
             return nil
         case .binary:
@@ -346,6 +420,9 @@ final class OllamaController: ObservableObject {
     @Published private(set) var loaded: [LoadedModel] = []
     @Published private(set) var installed: [InstalledModel] = []
     @Published private(set) var busyModel: String?
+    /// Mecanismos instalados y el elegido para encender (ajustes).
+    @Published private(set) var mechanisms: [Backend] = []
+    @Published private(set) var preferred: Backend?
     @Published var error: String?
     @Published private(set) var memory = SystemMemory.current()
     /// Segundos sin uso del modelo cargado (nil si no hay modelo o no se mide).
@@ -422,8 +499,21 @@ final class OllamaController: ObservableObject {
         }
 
         memory = SystemMemory.current()
+        let (all, pref) = await Task.detached { (Detector.available(), Detector.preferred) }.value
+        mechanisms = all
+        preferred = pref
         setPower(derive(up: v != nil))
         await trackIdle()
+    }
+
+    /// Con qué se enciende a partir de ahora. Si está apagado, cuenta ya.
+    func prefer(_ b: Backend) {
+        Detector.setPreferred(b)
+        preferred = b
+        if !power.isUp && !power.isTransition {
+            backend = b
+            lastActive = b
+        }
     }
 
     private func trackIdle() async {
@@ -516,21 +606,34 @@ final class OllamaController: ObservableObject {
 
     /// Estado de ejemplo para las capturas del README (`--snapshot … demo`): los
     /// modelos y tamaños reales de un Mac de 48 GB, sin tocar Ollama ni los ajustes.
-    func loadDemo() {
+    func loadDemo(modelLoaded: Bool = true) {
         isDemo = true
         power = .on
         backend = .launchAgent(label: "homebrew.mxcl.ollama", plist: "")
+        mechanisms = [backend, .app(URL(fileURLWithPath: "/Applications/Ollama.app"))]
+        preferred = backend
         version = "0.33.0"
-        loaded = [LoadedModel(name: "qwen3.8:27b-mlx", bytes: 23_126_298_344, context: 131_072)]
+        loaded = modelLoaded ? [LoadedModel(name: "qwen3.8:27b-mlx", bytes: 23_126_298_344, context: 131_072)] : []
         installed = [
             InstalledModel(name: "gemma4:26b-nvfp4", bytes: 18_334_412_658, quantization: "nvfp4", vision: false, tools: true),
             InstalledModel(name: "muse-glimmer:30b-mlx", bytes: 21_232_871_036, quantization: nil, vision: true, tools: true),
             InstalledModel(name: "qwen3.8:27b-mlx", bytes: 18_210_000_000, quantization: "nvfp4", vision: true, tools: true),
         ]
-        memory = SystemMemory(total: 51_539_607_552, used: 33_900_000_000, pressure: .normal)
+        // Sin modelo de Ollama (demo con Splash) queda el resto de apps: 14,5 GB.
+        memory = SystemMemory(total: 51_539_607_552, used: modelLoaded ? 33_900_000_000 : 15_600_000_000, pressure: .normal)
         idleReleaseMinutes = 30
-        idleSeconds = 7 * 60 + 12
+        idleSeconds = modelLoaded ? 7 * 60 + 12 : nil
         error = nil
+    }
+
+    /// Saca de la memoria todo lo cargado (antes de arrancar otro motor).
+    func releaseAll() async {
+        guard power == .on, !isDemo else { return }
+        for name in loaded.map(\.name) {
+            if let failure = await OllamaAPI.setKeepAlive(model: name, 0) { error = failure }
+        }
+        tracker.touch()
+        await refresh()
     }
 
     func load(_ model: String) { keepAlive(model, -1) }

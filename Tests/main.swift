@@ -42,5 +42,27 @@ check("un contador de CPU que baja no rompe nada", tr.idleSeconds(now: at(220)) 
 tr.sample(cpu: [200: 0.3 + IdleTracker.activityThreshold], models: ["qwen"], now: at(230))
 check("justo en el umbral cuenta como uso", tr.idleSeconds(now: at(230)) == 0)
 
+// Splash: el contador sale de /status, no del CPU.
+func splash(_ submitted: Int64, busy: Bool = false) -> SplashStatus {
+    SplashStatus(ready: true, model: "incoai/Qwen3.8-27B-Splash", bytes: 19_055_050_752, submitted: submitted, busy: busy)
+}
+var sa = SplashActivity(now: t0)
+sa.sample(splash(2), now: at(0))
+sa.sample(splash(2), now: at(60))
+check("Splash: sin peticiones nuevas cuenta como reposo", sa.idleSeconds(now: at(60)) == 60)
+
+sa.sample(splash(2, busy: true), now: at(70))
+check("Splash: una petición en curso es uso", sa.idleSeconds(now: at(70)) == 0)
+
+sa.sample(splash(2), now: at(100))
+sa.sample(splash(3), now: at(130))
+check("Splash: una petición que empezó y acabó entre muestras es uso", sa.idleSeconds(now: at(130)) == 0)
+
+sa.sample(splash(3), now: at(190))
+check("Splash: vuelve a contar tras la petición", sa.idleSeconds(now: at(190)) == 60)
+
+sa.sample(splash(0), now: at(200))
+check("Splash: un reinicio del servidor (contador a 0) es uso", sa.idleSeconds(now: at(200)) == 0)
+
 print(failures == 0 ? "todo bien" : "\(failures) fallos")
 exit(failures == 0 ? 0 : 1)

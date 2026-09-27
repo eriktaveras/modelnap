@@ -73,7 +73,7 @@
 "Descargar Ollama…" = "Download Ollama…";
 "Acerca de ModelNap" = "About ModelNap";
 "Salir" = "Quit";
-"Deja dormir a tus modelos locales y recupera la memoria del Mac.\n\nmodelnap.com\nHecho por Taveras Solutions LLC\n\nProyecto independiente, no afiliado a Ollama." = "Let idle local LLMs sleep and get your Mac's memory back.\n\nmodelnap.com\nMade by Taveras Solutions LLC\n\nIndependent project, not affiliated with Ollama.";
+"Deja dormir a tus modelos locales y recupera la memoria del Mac.\n\nmodelnap.com\nHecho por Taveras Solutions LLC\n\nProyecto independiente, no afiliado a Ollama ni a Inco AI." = "Let idle local LLMs sleep and get your Mac's memory back.\n\nmodelnap.com\nMade by Taveras Solutions LLC\n\nIndependent project, not affiliated with Ollama or Inco AI.";
 
 /* Estado y errores */
 "no instalado" = "not installed";
@@ -87,3 +87,41 @@
 "Idioma" = "Language";
 "La app se reinicia al cambiarlo" = "The app restarts when you change it";
 "Auto" = "Auto";
+
+/* Splash */
+"Splash no está instalado." = "Splash isn't installed.";
+"Splash necesita %@ libres y hay %@. Cierra apps pesadas (Safari, Chrome) y vuelve a intentarlo." = "Splash needs %@ free and there's %@. Quit memory-heavy apps (Safari, Chrome) and try again.";
+"El puerto 8000 está ocupado por otro programa." = "Port 8000 is taken by another program.";
+"Splash ya está sirviendo desde otra terminal." = "Splash is already serving from another terminal.";
+"Splash se cerró al arrancar. Revisa el log." = "Splash quit while starting. Check the log.";
+"Splash no respondió en 3 min. Revisa el log." = "Splash didn't respond within 3 min. Check the log.";
+"No hay modelos de Splash. Descarga uno con `splash serve --model …`." = "No Splash models. Download one with `splash serve --model …`.";
+"Apagar Splash y liberar su memoria" = "Turn Splash off and free its memory";
+"Encender Splash" = "Turn Splash on";
+"Apagar Splash" = "Turn Splash off";
+"Sin modelos" = "No models";
+"se apaga en <1 min" = "stops in <1 min";
+"se apaga en %d min" = "stops in %d min";
+"Cargando el modelo. Tarda unos 20 s." = "Loading the model. Takes about 20 s.";
+"Apagando y liberando la memoria" = "Shutting down and freeing memory";
+"Apagado solo a las %@ por falta de uso" = "Stopped automatically at %@ after going idle";
+"Necesita unos %@ libres. " = "Needs about %@ free. ";
+"Al encenderlo se vacía antes la memoria de Ollama." = "Turning it on unloads Ollama's models first.";
+"Ollama sin modelo en memoria" = "Ollama has no model in memory";
+"Si el modelo no genera nada en ese tiempo, se saca de la memoria. Ollama sigue encendido y lo vuelve a cargar con el siguiente mensaje. Splash no puede soltar el modelo sin cerrarse, así que se apaga." = "If the model doesn't generate anything for that long, it's unloaded. Ollama stays on and loads it again with the next message. Splash can't drop its model without quitting, so it's turned off.";
+"Splash encendido" = "Splash is on";
+"Splash arrancando…" = "Splash is starting…";
+"Splash apagándose…" = "Splash is shutting down…";
+"Ver el log de Splash" = "Show Splash log";
+"Ollama apagado" = "Ollama is off";
+"Liberar el modelo sin uso" = "Unload the model when idle";
+"Ollama sigue encendido y lo recarga con el siguiente mensaje." = "Ollama stays on and reloads it with the next message.";
+"Encender con" = "Start with";
+"Apagar sin uso" = "Stop when idle";
+"Splash no suelta el modelo sin cerrarse: se apaga y no vuelve solo." = "Splash can't drop its model without quitting: it's stopped and won't come back on its own.";
+"Vaciar Ollama antes" = "Unload Ollama first";
+"Splash necesita unos %@ libres para arrancar" = "Splash needs about %@ free to start";
+"General" = "General";
+"Logs" = "Logs";
+"Ahora corre con %@. Se usará %@ la próxima vez que lo enciendas." = "It's running with %@ now. %@ will be used next time you turn it on.";
+"Así se enciende desde el panel y con el atajo." = "Used when you turn it on from the panel or the shortcut.";

@@ -5,12 +5,30 @@ All notable changes to ModelNap (formerly "Interruptor Ollama"). The format foll
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-27
+
 ### Changed
 - README in English, with the Spanish version in `README.es.md`. `CONTRIBUTING.md`, `SECURITY.md`, issue and PR
   templates and this changelog are now in English, with Spanish notes.
 
 ### Added
 - English hero and menu bar images for the README.
+- **Splash (Inco AI) support.** A Splash card in the panel turns `splash serve` on and off, picks the model, shows
+  its real memory (from `/status`, since its weights are file-mapped and don't show up as app memory) and adds
+  them to the memory bar. Turning Splash on unloads Ollama's models first. Idle release applies too: Splash
+  can't drop its model without quitting, so it's stopped. Startup errors are explained (e.g. how much free
+  memory it needs versus how much there is). Terminal: `ModelNap --splash status | on [model] | off | idle-test N`.
+
+- **Reorganized settings** in three sections: Ollama, Splash and General. Each engine has its own idle timer
+  (Splash defaults to never, since it doesn't come back on its own), a "Start with" picker chooses between
+  Ollama.app and a LaunchAgent when both are installed, Splash gets "Unload Ollama first" and a model picker,
+  and there are log links for both engines.
+
+### Fixed
+- Ollama.app 0.34 refuses a quit request from another app ("User canceled"), so turning it off took 10 s and
+  ended in a force quit. It now gets SIGTERM after 2 s and closes cleanly with its server (~2.3 s in total).
+- With both Ollama.app and a LaunchAgent installed, turning Ollama on while it was off picked Ollama.app. The
+  last mechanism that was running is now remembered across launches.
 
 ## [1.2.1] — 2026-09-15
 
@@ -59,7 +77,8 @@ All notable changes to ModelNap (formerly "Interruptor Ollama"). The format foll
 - Loaded model with *Free* and installed models list with *Load*.
 - Universal binary and `.dmg` installer signed with a Developer ID and notarized by Apple.
 
-[Unreleased]: https://github.com/eriktaveras/modelnap/compare/v1.2.1...main
+[Unreleased]: https://github.com/eriktaveras/modelnap/compare/v1.3.0...main
+[1.3.0]: https://github.com/eriktaveras/modelnap/releases/tag/v1.3.0
 [1.2.1]: https://github.com/eriktaveras/modelnap/releases/tag/v1.2.1
 [1.2.0]: https://github.com/eriktaveras/modelnap/tree/v1.2.0
 [1.1.0]: https://github.com/eriktaveras/modelnap/tree/v1.1.0

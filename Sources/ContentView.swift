@@ -3,12 +3,14 @@ import AppKit
 
 struct ContentView: View {
     @ObservedObject var ollama: OllamaController
+    @ObservedObject var splash: SplashController
     @ObservedObject var prefs: Prefs
     @Environment(\.colorScheme) private var scheme
     @State private var showingSettings: Bool
 
-    init(ollama: OllamaController, prefs: Prefs, showingSettings: Bool = false) {
+    init(ollama: OllamaController, splash: SplashController, prefs: Prefs, showingSettings: Bool = false) {
         self.ollama = ollama
+        self.splash = splash
         self.prefs = prefs
         _showingSettings = State(initialValue: showingSettings)
     }
@@ -22,7 +24,7 @@ struct ContentView: View {
 
             VStack(spacing: 10) {
                 if showingSettings {
-                    SettingsView(ollama: ollama, prefs: prefs, theme: t)
+                    SettingsView(ollama: ollama, splash: splash, prefs: prefs, theme: t)
                 } else {
                     PowerHero(ollama: ollama, theme: t)
                     if let error = ollama.error {
@@ -34,8 +36,13 @@ struct ContentView: View {
                     if prefs.shouldOfferLogin {
                         LoginOffer(theme: t, accept: { prefs.answerLogin(true) }, decline: { prefs.answerLogin(false) })
                     }
+                    if ollama.power != .missing || splash.isInstalled {
+                        MemoryCard(ollama: ollama, splash: splash, theme: t)
+                    }
+                    if splash.isInstalled {
+                        SplashCard(splash: splash, theme: t)
+                    }
                     if ollama.power != .missing {
-                        MemoryCard(ollama: ollama, theme: t)
                         ModelList(ollama: ollama, theme: t)
                     }
                 }
@@ -259,11 +266,15 @@ struct PowerHero: View {
 
 struct MemoryCard: View {
     @ObservedObject var ollama: OllamaController
+    @ObservedObject var splash: SplashController
     let theme: Theme
     private var t: Theme { theme }
 
-    private var model: Int64 { ollama.loaded.reduce(0) { $0 + $1.bytes } }
-    private var mem: SystemMemory { ollama.memory }
+    private var model: Int64 { ollama.loaded.reduce(0) { $0 + $1.bytes } + splash.footprint }
+    private var mem: SystemMemory {
+        let m = ollama.memory
+        return SystemMemory(total: m.total, used: min(m.total, m.used + splash.outsideUsed), pressure: m.pressure)
+    }
 
     private var pressure: (String, Color) {
         switch mem.pressure {
@@ -346,6 +357,10 @@ struct MemoryCard: View {
                             ollama.idleReleaseMinutes))
                         .font(Brand.sans(11))
                         .foregroundStyle(t.muted)
+                } else if splash.power == .on {
+                    Text(ollama.power == .on ? tr("Ollama sin modelo en memoria") : tr("Ollama apagado"))
+                        .font(Brand.sans(11))
+                        .foregroundStyle(t.muted)
                 } else {
                     Text(ollama.power == .on ? tr("Ningún modelo en memoria") : tr("Ollama apagado · 0 GB en uso"))
                         .font(Brand.sans(11))
@@ -378,6 +393,94 @@ struct MemoryCard: View {
             parts.append(tr("contexto %dK", ctx / 1024))
         }
         return parts.joined(separator: " · ")
+    }
+}
+
+// MARK: - Splash
+
+struct SplashCard: View {
+    @ObservedObject var splash: SplashController
+    let theme: Theme
+    private var t: Theme { theme }
+
+    private var current: SplashModel? { splash.models.first { $0.id == splash.selected } }
+
+    var body: some View {
+        Card(theme: t) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Eyebrow(text: "Splash", theme: t)
+                    Text(SplashAPI.hostLabel)
+                        .font(Brand.mono(10))
+                        .foregroundStyle(t.muted)
+                    Spacer()
+                    if splash.power.isTransition {
+                        ProgressView().controlSize(.mini)
+                    }
+                    BrandSwitch(isOn: splash.power == .on || splash.power == .starting, theme: t) { splash.toggle() }
+                        .disabled(splash.power.isTransition)
+                        .help(splash.power == .on ? tr("Apagar Splash y liberar su memoria") : tr("Encender Splash"))
+                }
+
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        modelName
+                        Text(detail)
+                            .font(Brand.sans(10.5))
+                            .foregroundStyle(t.muted)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                if let error = splash.error {
+                    Banner(text: error, theme: t) { splash.error = nil }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var modelName: some View {
+        let label = Text(current?.shortName ?? tr("Sin modelos"))
+            .font(Brand.mono(11.5, splash.power == .on ? .semibold : .regular))
+            .lineLimit(1)
+        if splash.models.count > 1 && splash.power == .off {
+            Menu {
+                ForEach(splash.models) { m in
+                    Button("\(m.id) · \(m.bytes.gigabytes)") { splash.selected = m.id }
+                }
+            } label: { label }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+        } else {
+            label
+        }
+    }
+
+    private var detail: String {
+        switch splash.power {
+        case .on:
+            var parts = [tr("%@ en memoria", splash.footprint.memoryGB)]
+            if let idle = splash.idleSeconds, idle >= 60 { parts.append(tr("sin uso %d min", minutes(idle))) }
+            if let limit = splash.idleLimit, let idle = splash.idleSeconds {
+                let left = max(0, limit - idle)
+                parts.append(left < 60 ? tr("se apaga en <1 min") : tr("se apaga en %d min", Int(ceil(left / 60))))
+            }
+            return parts.joined(separator: " · ")
+        case .starting:
+            return tr("Cargando el modelo. Tarda unos 20 s.")
+        case .stopping:
+            return tr("Apagando y liberando la memoria")
+        case .off:
+            if let at = splash.autoStopped {
+                return tr("Apagado solo a las %@ por falta de uso", at.formatted(date: .omitted, time: .shortened))
+            }
+            let size = current.map { tr("Necesita unos %@ libres. ", ($0.bytes + 5_153_960_755).memoryGB) } ?? ""
+            return size + tr("Al encenderlo se vacía antes la memoria de Ollama.")
+        case .missing:
+            return ""
+        }
     }
 }
 
@@ -481,97 +584,155 @@ struct ModelRow: View {
 
 struct SettingsView: View {
     @ObservedObject var ollama: OllamaController
+    @ObservedObject var splash: SplashController
     @ObservedObject var prefs: Prefs
     let theme: Theme
     private var t: Theme { theme }
 
-    static let idleChoices = [0, 5, 15, 30, 60]
+    static let ollamaIdleChoices = [0, 5, 15, 30, 60]
+    /// Splash tarda ~15 s en volver y no arranca solo: plazos más largos.
+    static let splashIdleChoices = [0, 15, 30, 60, 120]
 
     var body: some View {
         VStack(spacing: 10) {
-            Card(theme: t) {
-                VStack(alignment: .leading, spacing: 9) {
-                    Eyebrow(text: tr("Liberar memoria sin uso"), theme: t)
-                    HStack(spacing: 0) {
-                        ForEach(Self.idleChoices, id: \.self) { m in
-                            let selected = ollama.idleReleaseMinutes == m
-                            Button { ollama.idleReleaseMinutes = m } label: {
-                                Text(m == 0 ? tr("Nunca") : "\(m) min")
-                                    .font(Brand.sans(11, selected ? .semibold : .regular))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 6)
-                                    .foregroundStyle(selected ? t.onAccent : t.secondary)
-                                    .background(RoundedRectangle(cornerRadius: 6).fill(selected ? t.accent : Color.clear))
-                                    .contentShape(Rectangle())
+            section("Ollama", detail: ollama.version.map { "v\($0)" }) {
+                VStack(alignment: .leading, spacing: 7) {
+                    label(tr("Liberar el modelo sin uso"))
+                    Segmented(choices: Self.ollamaIdleChoices, selected: ollama.idleReleaseMinutes,
+                              title: minutesLabel, theme: t) { ollama.idleReleaseMinutes = $0 }
+                    hint(tr("Ollama sigue encendido y lo recarga con el siguiente mensaje."))
+                }
+                if ollama.mechanisms.count > 1 {
+                    divider
+                    VStack(alignment: .leading, spacing: 7) {
+                        label(tr("Encender con"))
+                        Segmented(choices: ollama.mechanisms.map(\.kind),
+                                  selected: (ollama.preferred ?? ollama.backend).kind,
+                                  title: { $0 }, theme: t) { kind in
+                            if let b = ollama.mechanisms.first(where: { $0.kind == kind }) { ollama.prefer(b) }
+                        }
+                        hint(mechanismHint)
+                    }
+                }
+            }
+
+            if splash.isInstalled {
+                section("Splash", detail: SplashAPI.hostLabel) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        label(tr("Apagar sin uso"))
+                        Segmented(choices: Self.splashIdleChoices, selected: splash.idleStopMinutes,
+                                  title: minutesLabel, theme: t) { splash.idleStopMinutes = $0 }
+                        hint(tr("Splash no suelta el modelo sin cerrarse: se apaga y no vuelve solo."))
+                    }
+                    divider
+                    toggleRow(title: tr("Vaciar Ollama antes"),
+                              detail: tr("Splash necesita unos %@ libres para arrancar", splashNeeds),
+                              isOn: splash.freesOllamaFirst) { splash.freesOllamaFirst.toggle() }
+                    if splash.models.count > 1 {
+                        divider
+                        HStack {
+                            label(tr("Modelo"))
+                            Spacer()
+                            Menu(splash.models.first { $0.id == splash.selected }?.shortName ?? "-") {
+                                ForEach(splash.models) { m in
+                                    Button("\(m.id) · \(m.bytes.gigabytes)") { splash.selected = m.id }
+                                }
                             }
-                            .buttonStyle(.plain)
+                            .menuStyle(.borderlessButton)
+                            .fixedSize()
+                            .disabled(splash.power != .off)
                         }
                     }
-                    .padding(2)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(t.track))
-
-                    Text(tr("Si el modelo no genera nada en ese tiempo, se saca de la memoria. Ollama sigue encendido y lo vuelve a cargar con el siguiente mensaje."))
-                        .font(Brand.sans(10.5))
-                        .foregroundStyle(t.muted)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
-            Card(theme: t) {
-                VStack(spacing: 11) {
-                    settingRow(title: tr("Atajo de teclado"),
-                               detail: tr("%@ enciende o apaga Ollama desde cualquier app", HotKey.display),
-                               isOn: prefs.hotKeyEnabled) { prefs.hotKeyEnabled.toggle() }
-                    Rectangle().fill(t.line).frame(height: 1)
-                    settingRow(title: tr("Abrir al iniciar sesión"),
-                               detail: tr("Siempre a mano en la barra de menús"),
-                               isOn: prefs.opensAtLogin) { try? prefs.toggleLogin() }
-                }
-            }
-
-            Card(theme: t) {
+            section(tr("General"), detail: nil) {
+                toggleRow(title: tr("Atajo de teclado"),
+                          detail: tr("%@ enciende o apaga Ollama desde cualquier app", HotKey.display),
+                          isOn: prefs.hotKeyEnabled) { prefs.hotKeyEnabled.toggle() }
+                divider
+                toggleRow(title: tr("Abrir al iniciar sesión"),
+                          detail: tr("Siempre a mano en la barra de menús"),
+                          isOn: prefs.opensAtLogin) { try? prefs.toggleLogin() }
+                divider
                 HStack(spacing: 10) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(tr("Idioma")).font(Brand.sans(12, .semibold))
-                        Text(tr("La app se reinicia al cambiarlo"))
-                            .font(Brand.sans(10.5))
-                            .foregroundStyle(t.muted)
-                    }
+                    Text(tr("Idioma")).font(Brand.sans(12, .semibold))
                     Spacer(minLength: 8)
-                    HStack(spacing: 0) {
-                        ForEach(Language.allCases, id: \.self) { lang in
-                            let selected = prefs.language == lang
-                            Button { prefs.setLanguage(lang) } label: {
-                                Text(lang.label)
-                                    .font(Brand.sans(11, selected ? .semibold : .regular))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 5)
-                                    .foregroundStyle(selected ? t.onAccent : t.secondary)
-                                    .background(RoundedRectangle(cornerRadius: 6).fill(selected ? t.accent : Color.clear))
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(2)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(t.track))
+                    Segmented(choices: Language.allCases, selected: prefs.language,
+                              title: \.label, theme: t) { prefs.setLanguage($0) }
+                        .frame(width: 150)
                 }
             }
 
-            HStack {
-                Eyebrow(text: "ModelNap \(Bundle.main.shortVersion)", theme: t)
+            HStack(spacing: 14) {
+                Text(tr("Logs")).font(Brand.sans(11, .semibold)).foregroundStyle(t.secondary)
+                logLink("Ollama", enabled: ollama.isDemo || ollama.backend.logURL != nil) { prefs.openLog?() }
+                if splash.isInstalled {
+                    logLink("Splash", enabled: splash.logURL != nil) { prefs.openSplashLog?() }
+                }
                 Spacer()
-                Button(tr("Ver el log de Ollama")) { prefs.openLog?() }
-                    .buttonStyle(.plain)
-                    .font(Brand.sans(11, .medium))
-                    .foregroundStyle(t.accent)
-                    .disabled(ollama.backend.logURL == nil)
             }
             .padding(.horizontal, 2)
         }
     }
 
-    private func settingRow(title: String, detail: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+    private var splashNeeds: String {
+        let bytes = splash.models.first { $0.id == splash.selected }?.bytes ?? 17_400_000_000
+        return (bytes + 5_153_960_755).memoryGB
+    }
+
+    private var mechanismHint: String {
+        let pref = ollama.preferred ?? ollama.backend
+        if ollama.power.isUp, ollama.backend.kind != pref.kind {
+            return tr("Ahora corre con %@. Se usará %@ la próxima vez que lo enciendas.", ollama.backend.kind, pref.kind)
+        }
+        return tr("Así se enciende desde el panel y con el atajo.")
+    }
+
+    private func minutesLabel(_ m: Int) -> String { m == 0 ? tr("Nunca") : m >= 120 ? "\(m / 60) h" : "\(m) min" }
+
+    // MARK: piezas
+
+    private func section<Content: View>(_ title: String, detail: String?, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Eyebrow(text: title, theme: t)
+                if let detail {
+                    Text(detail).font(Brand.mono(10)).foregroundStyle(t.muted)
+                }
+            }
+            .padding(.horizontal, 2)
+            Card(theme: t) {
+                VStack(alignment: .leading, spacing: 11) { content() }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var divider: some View { Rectangle().fill(t.line).frame(height: 1) }
+
+    private func label(_ text: String) -> some View {
+        Text(text).font(Brand.sans(12, .semibold))
+    }
+
+    private func hint(_ text: String) -> some View {
+        Text(text)
+            .font(Brand.sans(10.5))
+            .foregroundStyle(t.muted)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func logLink(_ title: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: "doc.text").font(Brand.sans(11, .medium))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(enabled ? t.accent : t.muted)
+        .disabled(!enabled)
+    }
+
+    private func toggleRow(title: String, detail: String, isOn: Bool, action: @escaping () -> Void) -> some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(Brand.sans(12, .semibold))
@@ -583,6 +744,36 @@ struct SettingsView: View {
             Spacer(minLength: 8)
             BrandSwitch(isOn: isOn, theme: t, action: action)
         }
+    }
+}
+
+/// Selector de opciones con la marca (el de sistema no se puede teñir en un popover).
+struct Segmented<Value: Hashable>: View {
+    let choices: [Value]
+    let selected: Value
+    let title: (Value) -> String
+    let theme: Theme
+    let pick: (Value) -> Void
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(choices, id: \.self) { value in
+                let isOn = value == selected
+                Button { pick(value) } label: {
+                    Text(title(value))
+                        .font(Brand.sans(11, isOn ? .semibold : .regular))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .foregroundStyle(isOn ? theme.onAccent : theme.secondary)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(isOn ? theme.accent : Color.clear))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 8).fill(theme.track))
     }
 }
 
